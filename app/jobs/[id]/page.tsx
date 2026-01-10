@@ -22,26 +22,33 @@ export default async function JobDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Get current user to check if they've applied
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   let hasApplied = false;
+  let applicationStatus = undefined;
+
   if (user) {
     const { data: application } = await supabase
-      .from('applications')
-      .select('id')
-      .eq('job_id', job.id)
-      .eq('user_id', user.id)
+      .from("applications")
+      .select("id, status")
+      .eq("job_id", job.id)
+      .eq("user_id", user.id)
       .single();
-    
-    hasApplied = !!application;
+
+    if (application) {
+      hasApplied = true;
+      applicationStatus = application.status;
+    }
   }
 
   return (
-    <JobDetailClient 
-      job={job} 
-      user={user} 
+    <JobDetailClient
+      job={job}
+      user={user}
       hasApplied={hasApplied}
+      applicationStatus={applicationStatus}
     />
   );
 }
