@@ -1,10 +1,21 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { createClient } from '@/lib/client';
+import React, {
+  useState,
+  useTransition,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createClient } from "@/lib/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+
+// ============================================================================
+// Types & Interfaces
+// ============================================================================
 
 interface Job {
   id: string;
@@ -20,289 +31,584 @@ interface Job {
   user_id: string;
 }
 
-interface JobDetailClientProps {
-  job: Job;
-  user: any;
-  hasApplied: boolean;
+interface User {
+  id: string;
+  user_metadata?: {
+    role?: string;
+  };
 }
 
-export default function JobDetailClient({ job, user, hasApplied: initialHasApplied }: JobDetailClientProps) {
+interface JobDetailClientProps {
+  job: Job;
+  user: User | null;
+  hasApplied: boolean;
+  applicationStatus?: ApplicationStatus;
+}
+
+type ApplicationStatus = "accepted" | "rejected" | "pending";
+
+interface StatusConfig {
+  bg: string;
+  text: string;
+  icon: React.ReactNode;
+  message: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const STATUS_CONFIGS: Record<ApplicationStatus, StatusConfig> = {
+  accepted: {
+    bg: "bg-green-100 dark:bg-green-900",
+    text: "text-green-800 dark:text-green-300",
+    icon: (
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+    ),
+    message: "Congratulations! Your application has been accepted.",
+  },
+  rejected: {
+    bg: "bg-red-100 dark:bg-red-900",
+    text: "text-red-800 dark:text-red-300",
+    icon: (
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    ),
+    message: "Unfortunately, your application was not successful this time.",
+  },
+  pending: {
+    bg: "bg-blue-100 dark:bg-blue-900",
+    text: "text-blue-800 dark:text-blue-300",
+    icon: (
+      <svg
+        className="h-5 w-5 animate-spin"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    ),
+    message: "Your application is under review.",
+  },
+};
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+const formatTimeAgo = (dateString: string): string => {
+  const now = new Date();
+  const posted = new Date(dateString);
+  const diffInMs = now.getTime() - posted.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) return "Today";
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+  return `${Math.floor(diffInDays / 30)} months ago`;
+};
+
+const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const capitalizeFirst = (str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+// ============================================================================
+// Sub-components
+// ============================================================================
+
+interface StatusBannerProps {
+  status: ApplicationStatus;
+}
+
+const StatusBanner: React.FC<StatusBannerProps> = ({ status }) => {
+  const config = STATUS_CONFIGS[status];
+
+  return (
+    <div className={`rounded-lg border p-4 ${config.bg} ${config.text}`}>
+      <div className="flex items-center gap-3">
+        {config.icon}
+        <div>
+          <p className="font-semibold">
+            Application Status: {capitalizeFirst(status)}
+          </p>
+          <p className="text-sm opacity-90">{config.message}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface JobHeaderProps {
+  job: Job;
+}
+
+const JobHeader: React.FC<JobHeaderProps> = ({ job }) => {
+  return (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        {job.title}
+      </h1>
+      <div className="flex flex-wrap items-center gap-4 text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-2">
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            />
+          </svg>
+          <span className="font-medium">{job.company}</span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-800 dark:bg-primary-900 dark:text-primary-300">
+          {job.job_type}
+        </span>
+        <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+          {job.experience_level}
+        </span>
+        {job.salary && (
+          <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
+            {job.salary}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-1">
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <span>{job.location}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>Posted {formatTimeAgo(job.created_at)}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface JobActionsProps {
+  isOwner: boolean;
+  hasApplied: boolean;
+  isSaved: boolean;
+  isPending: boolean;
+  userRole?: string;
+  jobId: string;
+  applicationUrl: string;
+  onApply: () => void;
+  onSave: () => void;
+}
+
+const JobActions: React.FC<JobActionsProps> = ({
+  isOwner,
+  hasApplied,
+  isSaved,
+  isPending,
+  userRole,
+  jobId,
+  applicationUrl,
+  onApply,
+  onSave,
+}) => {
+  if (isOwner) {
+    return (
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/jobs/${jobId}/applicants`}
+          className="rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+        >
+          View Applicants
+        </Link>
+        <Link
+          href={`/jobs/${jobId}/edit`}
+          className="rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+        >
+          Edit Job
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {userRole === "job-seeker" && (
+        <button
+          onClick={onSave}
+          disabled={isPending}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 sm:w-auto"
+        >
+          <svg
+            className={`h-5 w-5 ${isSaved ? "fill-current" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+            />
+          </svg>
+          {isSaved ? "Saved" : "Save Job"}
+        </button>
+      )}
+
+      <div className="flex flex-wrap gap-3">
+        {hasApplied ? (
+          <button
+            disabled
+            className="rounded-lg bg-gray-400 px-6 py-3 font-semibold text-white cursor-not-allowed"
+          >
+            ✓ Already Applied
+          </button>
+        ) : (
+          <button
+            onClick={onApply}
+            className="rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+          >
+            Apply Now
+          </button>
+        )}
+
+        <a
+          href={applicationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+        >
+          Apply on Company Site →
+        </a>
+      </div>
+    </div>
+  );
+};
+
+interface JobDetailsProps {
+  job: Job;
+}
+
+const JobDetails: React.FC<JobDetailsProps> = ({ job }) => {
+  const details = [
+    { label: "Job Type", value: job.job_type },
+    { label: "Experience Level", value: job.experience_level },
+    { label: "Location", value: job.location },
+    ...(job.salary ? [{ label: "Salary Range", value: job.salary }] : []),
+    { label: "Posted", value: formatDate(job.created_at) },
+  ];
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+        Job Details
+      </h2>
+      <dl className="space-y-4">
+        {details.map(({ label, value }) => (
+          <div key={label}>
+            <dt className="mb-1 text-sm font-semibold text-gray-500 dark:text-gray-400">
+              {label}
+            </dt>
+            <dd className="text-base text-gray-900 dark:text-white">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+};
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export default function JobDetailClient({
+  job,
+  user,
+  hasApplied: initialHasApplied,
+  applicationStatus: initialStatus,
+}: JobDetailClientProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
   const [isPending, startTransition] = useTransition();
   const [hasApplied, setHasApplied] = useState(initialHasApplied);
+  const [applicationStatus, setApplicationStatus] = useState<
+    ApplicationStatus | undefined
+  >(initialStatus);
   const [isSaved, setIsSaved] = useState(false);
 
   const userRole = user?.user_metadata?.role;
   const isOwner = user?.id === job.user_id;
+  const isJobSeeker = userRole === "job-seeker";
 
-  const handleApply = () => {
-    if (!user) {
-      toast.error('Please log in to apply for jobs');
-      router.push('/login');
-      return;
-    }
+  // ============================================================================
+  // Real-time Subscription
+  // ============================================================================
 
-    if (userRole !== 'job-seeker') {
-      toast.error('Only job seekers can apply for positions');
-      return;
-    }
+  useEffect(() => {
+    if (!user || !hasApplied) return;
 
-    startTransition(async () => {
-      const { error } = await supabase
-        .from('applications')
-        .insert({
-          job_id: job.id,
-          user_id: user.id,
-          status: 'pending'
-        });
+    let channel: RealtimeChannel;
 
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('You have already applied for this job');
-        } else {
-          toast.error('Failed to submit application');
-        }
-      } else {
-        toast.success('Application submitted successfully!');
-        setHasApplied(true);
+    const setupSubscription = async () => {
+      channel = supabase
+        .channel(`application_status_${job.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "applications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload: any) => {
+            if (payload.new.job_id === job.id) {
+              const newStatus = payload.new.status as ApplicationStatus;
+              setApplicationStatus(newStatus);
+              toast.info(
+                `Application status updated to: ${capitalizeFirst(newStatus)}`
+              );
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
       }
-    });
-  };
+    };
+  }, [user, hasApplied, job.id, supabase]);
 
-  const handleSaveJob = () => {
+  // ============================================================================
+  // Check if job is saved
+  // ============================================================================
+
+  useEffect(() => {
+    if (!user || !isJobSeeker) return;
+
+    const checkSavedStatus = async () => {
+      const { data } = await supabase
+        .from("saved_jobs")
+        .select("id")
+        .eq("job_id", job.id)
+        .eq("user_id", user.id)
+        .single();
+
+      setIsSaved(!!data);
+    };
+
+    checkSavedStatus();
+  }, [user, isJobSeeker, job.id, supabase]);
+
+  // ============================================================================
+  // Event Handlers
+  // ============================================================================
+
+  const handleApply = useCallback(() => {
     if (!user) {
-      toast.error('Please log in to save jobs');
-      router.push('/login');
+      toast.error("Please log in to apply for jobs");
+      router.push("/login");
+      return;
+    }
+
+    if (!isJobSeeker) {
+      toast.error("Only job seekers can apply for positions");
+      return;
+    }
+
+    router.push(`/jobs/${job.id}/apply`);
+  }, [user, isJobSeeker, job.id, router]);
+
+  const handleSaveJob = useCallback(() => {
+    if (!user) {
+      toast.error("Please log in to save jobs");
+      router.push("/login");
       return;
     }
 
     startTransition(async () => {
-      if (isSaved) {
-        const { error } = await supabase
-          .from('saved_jobs')
-          .delete()
-          .eq('job_id', job.id)
-          .eq('user_id', user.id);
+      try {
+        if (isSaved) {
+          const { error } = await supabase
+            .from("saved_jobs")
+            .delete()
+            .eq("job_id", job.id)
+            .eq("user_id", user.id);
 
-        if (!error) {
+          if (error) throw error;
+
           setIsSaved(false);
-          toast.success('Job removed from saved list');
-        }
-      } else {
-        const { error } = await supabase
-          .from('saved_jobs')
-          .insert({
+          toast.success("Job removed from saved list");
+        } else {
+          const { error } = await supabase.from("saved_jobs").insert({
             job_id: job.id,
-            user_id: user.id
+            user_id: user.id,
           });
 
-        if (!error) {
+          if (error) throw error;
+
           setIsSaved(true);
-          toast.success('Job saved successfully!');
+          toast.success("Job saved successfully!");
         }
+      } catch (error) {
+        console.error("Error saving job:", error);
+        toast.error("Failed to save job. Please try again.");
       }
     });
-  };
+  }, [user, isSaved, job.id, router, supabase]);
 
-  const timeAgo = (date: string) => {
-    const now = new Date();
-    const posted = new Date(date);
-    const diffInDays = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Today';
-    if (diffInDays === 1) return 'Yesterday';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-    return `${Math.floor(diffInDays / 30)} months ago`;
-  };
+  // ============================================================================
+  // Render
+  // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="mb-6 flex items-center space-x-2 text-sm">
-          <Link href="/jobs" className="text-primary-600 hover:underline">
-            Jobs
-          </Link>
-          <span className="text-gray-400 dark:text-gray-600">/</span>
-          <span className="text-gray-600 dark:text-gray-400">{job.title}</span>
-        </nav>
-
-        {/* Main Card */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
-          
-          {/* Header Section */}
-          <div className="p-8 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {job.title}
-                </h1>
-                <p className="text-xl text-gray-700 dark:text-gray-300 mb-4">
-                  {job.company}
-                </p>
-                
-                {/* Job Meta */}
-                <div className="flex flex-wrap gap-3 mb-4">
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300">
-                    {job.job_type}
-                  </span>
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                    {job.experience_level}
-                  </span>
-                  {job.salary && (
-                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                      {job.salary}
-                    </span>
-                  )}
-                </div>
-
-                {/* Location and Posted */}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {job.location}
-                  </div>
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Posted {timeAgo(job.created_at)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 ml-4">
-                {!isOwner && userRole === 'job-seeker' && (
-                  <button
-                    onClick={handleSaveJob}
-                    disabled={isPending}
-                    className="p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                    title={isSaved ? "Remove from saved" : "Save job"}
-                  >
-                    <svg className={`w-5 h-5 ${isSaved ? 'fill-primary-600' : 'fill-none'}`} stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Apply Button */}
-            {!isOwner && (
-              <div className="flex gap-3">
-                {hasApplied ? (
-                  <div className="flex items-center px-6 py-3 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 font-medium">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Applied
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleApply}
-                    disabled={isPending}
-                    className="px-8 py-3 text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isPending ? 'Applying...' : 'Apply Now'}
-                  </button>
-                )}
-                
-                <a
-                  href={job.application_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 text-gray-900 dark:text-white bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
-                >
-                  Apply on Company Site
-                </a>
-              </div>
-            )}
-
-            {isOwner && (
-              <div className="flex gap-3">
-                <Link
-                  href={`/jobs/${job.id}/edit`}
-                  className="px-6 py-3 text-white bg-primary-600 hover:bg-primary-700 rounded-lg font-medium transition-colors"
-                >
-                  Edit Job
-                </Link>
-                <button
-                  className="px-6 py-3 text-gray-900 dark:text-white bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
-                >
-                  View Analytics
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Description Section */}
-          <div className="p-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Job Description
-            </h2>
-            <div className="prose prose-gray dark:prose-invert max-w-none">
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {job.description}
-              </p>
-            </div>
-          </div>
-
-          {/* Additional Info Section */}
-          <div className="p-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Job Details
-            </h2>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Job Type</dt>
-                <dd className="text-base font-semibold text-gray-900 dark:text-white">{job.job_type}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Experience Level</dt>
-                <dd className="text-base font-semibold text-gray-900 dark:text-white">{job.experience_level}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Location</dt>
-                <dd className="text-base font-semibold text-gray-900 dark:text-white">{job.location}</dd>
-              </div>
-              {job.salary && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Salary Range</dt>
-                  <dd className="text-base font-semibold text-gray-900 dark:text-white">{job.salary}</dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Posted</dt>
-                <dd className="text-base font-semibold text-gray-900 dark:text-white">
-                  {new Date(job.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        {/* Back Button */}
-        <div className="mt-6">
+        <nav className="mb-8 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <Link
             href="/jobs"
-            className="inline-flex items-center text-sm text-primary-600 hover:underline"
+            className="hover:text-primary-600 dark:hover:text-primary-400"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to all jobs
+            Jobs
           </Link>
+          <span>/</span>
+          <span className="text-gray-900 dark:text-white">{job.title}</span>
+        </nav>
+
+        {/* Application Status Banner */}
+        {!isOwner && applicationStatus && hasApplied && (
+          <div className="mb-6">
+            <StatusBanner status={applicationStatus} />
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Left Column - Job Info */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+              <JobHeader job={job} />
+
+              <div className="mt-6">
+                <JobActions
+                  isOwner={isOwner}
+                  hasApplied={hasApplied}
+                  isSaved={isSaved}
+                  isPending={isPending}
+                  userRole={userRole}
+                  jobId={job.id}
+                  applicationUrl={job.application_url}
+                  onApply={handleApply}
+                  onSave={handleSaveJob}
+                />
+              </div>
+            </div>
+
+            {/* Job Description */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+                Job Description
+              </h2>
+              <div className="prose prose-gray max-w-none dark:prose-invert">
+                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                  {job.description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Job Details */}
+          <div className="space-y-6">
+            <JobDetails job={job} />
+
+            {/* Back Link */}
+            <Link
+              href="/jobs"
+              className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+            >
+              ← Back to all jobs
+            </Link>
+          </div>
         </div>
       </div>
     </div>
