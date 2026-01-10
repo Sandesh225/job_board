@@ -2,55 +2,54 @@
 
 import { createClient } from '@/lib/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from "next/cache"; // Import this
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  const supabase = await createClient();
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) return { error: error.message }
-  
-  redirect('/dashboard')
+  if (error) return { error: error.message };
+
+  // PURGE CACHE: This forces the Header to see the new cookie session
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient()
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const role = formData.get('role') as string
+  const supabase = await createClient();
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const role = formData.get("role") as string;
+  const fullName = email.split("@")[0];
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // metadata is vital for Middleware RBAC
-      data: { role: role }, 
+      data: { role, full_name: fullName },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
-  })
+  });
 
-  if (error) return { error: error.message }
-
-  // Sync with public.profiles table for relational data
-  if (data?.user) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([{ id: data.user.id, role, email }])
-    
-    if (profileError) console.error("Profile Error:", profileError.message)
-  }
+  if (error) return { error: error.message };
 
   if (data?.session) {
-    redirect('/dashboard')
+    // PURGE CACHE: Only if the user is logged in immediately
+    revalidatePath("/", "layout");
+    redirect("/dashboard");
   }
 
-  return { success: "Please check your email to verify your account." }
+  return { success: "Check your email.", requiresConfirmation: true };
 }
 
 export async function logout() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
-  redirect('/login')
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  // PURGE CACHE: Force layout to revert to "logged out" state
+  revalidatePath("/", "layout");
+  redirect("/login");
 }

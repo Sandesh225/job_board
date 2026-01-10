@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/client";
 import { logout } from "@/app/actions/auth";
 
 export function Header() {
   const supabase = createClient();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,10 +18,14 @@ export function Header() {
     setMounted(true);
     setIsDark(document.documentElement.classList.contains("dark"));
 
-    supabase.auth.getUser().then(({ data }) => {
+    // Get initial user state
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
       setUser(data.user ?? null);
-    });
+    };
+    getUser();
 
+    // Subscribe to auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -28,6 +34,15 @@ export function Header() {
 
     return () => subscription.unsubscribe();
   }, [supabase]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // The server action will handle the redirect and revalidation
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   const toggleTheme = () => {
     const root = document.documentElement;
@@ -60,7 +75,11 @@ export function Header() {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-gray-200 bg-white px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
       <div className="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between">
-        <Link href={user ? "/dashboard" : "/"} className="flex items-center">
+        <Link
+          href={user ? "/dashboard" : "/"}
+          className="flex items-center"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
           <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
             <span className="text-xl font-bold text-white">J</span>
           </div>
@@ -74,6 +93,7 @@ export function Header() {
             onClick={toggleTheme}
             type="button"
             className="mr-2 rounded-lg p-2.5 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+            aria-label="Toggle theme"
           >
             {isDark ? "☀️" : "🌙"}
           </button>
@@ -83,15 +103,15 @@ export function Header() {
               {/* Profile Greeting Section */}
               <div className="hidden items-center gap-2 md:flex">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-primary-600 dark:bg-gray-800">
-                  {displayName?.charAt(0).toUpperCase()}
+                  {displayName?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <span className="text-sm font-medium dark:text-gray-200">
-                  Hi, {displayName}
+                  Hi, {displayName || "User"}
                 </span>
               </div>
 
               <button
-                onClick={() => logout()}
+                onClick={handleLogout}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
               >
                 Logout
@@ -102,12 +122,14 @@ export function Header() {
               <Link
                 href="/login"
                 className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Log in
               </Link>
               <Link
                 href="/register"
                 className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Sign Up
               </Link>
@@ -117,6 +139,8 @@ export function Header() {
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="ml-1 inline-flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600 lg:hidden"
+            aria-label="Toggle mobile menu"
+            aria-expanded={isMobileMenuOpen}
           >
             <span className="sr-only">Open main menu</span>
             <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
@@ -133,12 +157,14 @@ export function Header() {
           className={`${
             isMobileMenuOpen ? "block" : "hidden"
           } w-full items-center justify-between lg:flex lg:w-auto lg:order-1`}
+          aria-hidden={!isMobileMenuOpen}
         >
           <ul className="mt-4 flex flex-col font-medium lg:mt-0 lg:flex-row lg:space-x-8">
             <li>
               <Link
                 href={user ? "/dashboard" : "/"}
                 className="block py-2 text-primary-600 dark:text-white lg:p-0"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 {user ? "Dashboard" : "Home"}
               </Link>
@@ -147,6 +173,7 @@ export function Header() {
               <Link
                 href="/jobs"
                 className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Find Jobs
               </Link>
@@ -158,6 +185,7 @@ export function Header() {
                   <Link
                     href="/jobs/post"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Post a Job
                   </Link>
@@ -166,6 +194,7 @@ export function Header() {
                   <Link
                     href="/dashboard/my-jobs"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     My Jobs
                   </Link>
@@ -179,6 +208,7 @@ export function Header() {
                   <Link
                     href="/dashboard/applications"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     My Applications
                   </Link>
@@ -187,6 +217,7 @@ export function Header() {
                   <Link
                     href="/dashboard/saved-jobs"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Saved Jobs
                   </Link>
@@ -200,6 +231,7 @@ export function Header() {
                   <Link
                     href="/about"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     About Us
                   </Link>
@@ -208,6 +240,7 @@ export function Header() {
                   <Link
                     href="/pricing"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Pricing
                   </Link>
