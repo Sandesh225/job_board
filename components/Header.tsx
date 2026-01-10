@@ -3,28 +3,23 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/client";
-import { logout } from '@/app/actions/auth';
-
+import { logout } from "@/app/actions/auth";
 
 export function Header() {
   const supabase = createClient();
-
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // --- Mount & Theme Sync ---
   useEffect(() => {
     setMounted(true);
     setIsDark(document.documentElement.classList.contains("dark"));
 
-    // Initial auth state
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null);
     });
 
-    // Listen to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -34,25 +29,26 @@ export function Header() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  // --- Theme Toggle ---
   const toggleTheme = () => {
     const root = document.documentElement;
     const newTheme = isDark ? "light" : "dark";
-
     if (newTheme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-
-    // Flowbite-compatible key
     localStorage.setItem("flowbite-theme-mode", newTheme);
     setIsDark(!isDark);
   };
 
+  // --- Logic Improvements ---
   const userRole = user?.user_metadata?.role;
+  const fullName = user?.user_metadata?.full_name;
+  // Get first name from full name, or fallback to email prefix if name is missing
+  const displayName = fullName
+    ? fullName.split(" ")[0]
+    : user?.email?.split("@")[0];
 
-  // --- Prevent hydration flicker ---
   if (!mounted) {
     return (
       <nav className="fixed top-0 z-50 w-full border-b border-gray-200 bg-white px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
@@ -64,8 +60,6 @@ export function Header() {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-gray-200 bg-white px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
       <div className="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between">
-
-        {/* LOGO */}
         <Link href={user ? "/dashboard" : "/"} className="flex items-center">
           <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
             <span className="text-xl font-bold text-white">J</span>
@@ -75,10 +69,7 @@ export function Header() {
           </span>
         </Link>
 
-        {/* RIGHT ACTIONS */}
         <div className="flex items-center lg:order-2">
-
-          {/* THEME TOGGLE */}
           <button
             onClick={toggleTheme}
             type="button"
@@ -87,29 +78,42 @@ export function Header() {
             {isDark ? "☀️" : "🌙"}
           </button>
 
-          {/* AUTH BUTTONS */}
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="hidden text-sm dark:text-white md:block">
-                {user.email}
-              </span>
+              {/* Profile Greeting Section */}
+              <div className="hidden items-center gap-2 md:flex">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-primary-600 dark:bg-gray-800">
+                  {displayName?.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium dark:text-gray-200">
+                  Hi, {displayName}
+                </span>
+              </div>
+
               <button
                 onClick={() => logout()}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
               >
                 Logout
               </button>
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="mr-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800"
-            >
-              Log in
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800"
+              >
+                Sign Up
+              </Link>
+            </div>
           )}
 
-          {/* MOBILE MENU BUTTON */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="ml-1 inline-flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600 lg:hidden"
@@ -125,15 +129,12 @@ export function Header() {
           </button>
         </div>
 
-        {/* NAV LINKS */}
         <div
           className={`${
             isMobileMenuOpen ? "block" : "hidden"
           } w-full items-center justify-between lg:flex lg:w-auto lg:order-1`}
         >
           <ul className="mt-4 flex flex-col font-medium lg:mt-0 lg:flex-row lg:space-x-8">
-            
-            {/* If user is logged in, show Dashboard link instead of Home */}
             <li>
               <Link
                 href={user ? "/dashboard" : "/"}
@@ -142,7 +143,6 @@ export function Header() {
                 {user ? "Dashboard" : "Home"}
               </Link>
             </li>
-
             <li>
               <Link
                 href="/jobs"
@@ -152,7 +152,6 @@ export function Header() {
               </Link>
             </li>
 
-            {/* EMPLOYER-SPECIFIC LINKS */}
             {userRole === "employer" && (
               <>
                 <li>
@@ -171,18 +170,9 @@ export function Header() {
                     My Jobs
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/dashboard/analytics"
-                    className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
-                  >
-                    Analytics
-                  </Link>
-                </li>
               </>
             )}
 
-            {/* JOB-SEEKER-SPECIFIC LINKS */}
             {userRole === "job-seeker" && (
               <>
                 <li>
@@ -201,12 +191,25 @@ export function Header() {
                     Saved Jobs
                   </Link>
                 </li>
+              </>
+            )}
+
+            {!user && (
+              <>
                 <li>
                   <Link
-                    href="/dashboard/profile"
+                    href="/about"
                     className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
                   >
-                    My Profile
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="block py-2 text-gray-700 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-white lg:p-0"
+                  >
+                    Pricing
                   </Link>
                 </li>
               </>
