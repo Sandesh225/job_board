@@ -1,56 +1,124 @@
-import React from 'react';
+import React from "react";
 
 export default function Hero() {
   return (
-    <section className="bg-white dark:bg-gray-900 pt-24">
-      <div className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
-        {/* Recruitment Alert Badge */}
-        <a 
-          href="/jobs" 
-          className="inline-flex justify-between items-center py-1 px-1 pr-4 mb-7 text-sm text-gray-700 bg-gray-100 rounded-full dark:bg-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700" 
+    // Main hero wrapper with proper spacing and dark-mode support
+    <section className="bg-white dark:bg-gray-900 pt-28">
+      <div className="mx-auto max-w-screen-xl px-4 text-center lg:px-12">
+        {/* ================= Recruitment Alert Badge ================= */}
+        <a
+          href="/jobs"
           role="alert"
+          className="inline-flex items-center gap-3 mb-8 rounded-full bg-gray-100 px-2 py-1 text-sm text-gray-700 
+                     hover:bg-gray-200 transition dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
         >
-          <span className="text-xs bg-primary-600 rounded-full text-white px-4 py-1.5 mr-3">New</span> 
-          <span className="text-sm font-medium">Over 500+ remote tech jobs added this week!</span> 
-          <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
+          <span className="rounded-full bg-primary-600 px-3 py-1 text-xs font-semibold text-white">
+            New
+          </span>
+          <span className="font-medium">
+            500+ remote tech jobs added this week
+          </span>
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 
+                 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 
+                 1.414l-4 4a1 1 0 01-1.414 0z"
+              clipRule="evenodd"
+            />
           </svg>
         </a>
 
-        {/* Main Heading Refactored for Job Board */}
-        <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-          Find Your Dream Job in <span className="text-primary-600">Tech & Design</span>
+        {/* ================= Main Heading ================= */}
+        <h1
+          className="mb-6 text-4xl font-extrabold leading-tight tracking-tight 
+                       text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
+        >
+          Find Your Dream Job in{" "}
+          <span className="text-primary-600">Tech & Design</span>
         </h1>
 
-        {/* Supporting Text */}
-        <p className="mb-8 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">
-          Connecting the world’s best talent with top-tier companies. Whether you’re a developer, designer, or product manager, your next career move starts here.
+        {/* ================= Supporting Description ================= */}
+        <p
+          className="mx-auto mb-10 max-w-3xl text-lg text-gray-500 
+                      dark:text-gray-400"
+        >
+          Connecting top developers, designers, and product managers with
+          world-class companies. Your next career move starts here.
         </p>
 
-        {/* Call to Actions */}
-        <div className="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
-          <a href="/jobs" className="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-900">
-            Browse All Jobs
-            <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd"></path>
-            </svg>
+        {/* ================= Job Search Input (UX Boost) ================= */}
+        <div className="mx-auto mb-10 flex max-w-xl flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            placeholder="Search jobs (e.g. React, UI/UX, Remote)"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 
+                       text-sm focus:border-primary-600 focus:ring-primary-600
+                       dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          />
+          <a
+            href="/jobs"
+            className="rounded-lg bg-primary-700 px-6 py-3 text-sm font-medium 
+                       text-white hover:bg-primary-800 transition"
+          >
+            Search
           </a>
-          <a href="/post-job" className="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-gray-900 rounded-lg border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-            Post a Job (Free)
-          </a>  
         </div>
 
-        {/* Trusted By / Featured Companies Section */}
-        <div className="px-4 mx-auto text-center md:max-w-screen-md lg:max-w-screen-lg lg:px-36">
-          <span className="font-semibold text-gray-400 uppercase tracking-widest text-xs">Trusted by world-class companies</span>
-          <div className="flex flex-wrap justify-center items-center mt-8 text-gray-500 sm:justify-between opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
-             {/* Using simple text placeholders for company logos */}
-             <span className="text-xl font-bold px-4">GOOGLE</span>
-             <span className="text-xl font-bold px-4">STRIPE</span>
-             <span className="text-xl font-bold px-4">AIRBNB</span>
-             <span className="text-xl font-bold px-4">VERCEL</span>
+        {/* ================= Call To Actions ================= */}
+        <div className="mb-16 flex flex-col gap-4 sm:flex-row sm:justify-center">
+          <a
+            href="/jobs"
+            className="inline-flex items-center justify-center rounded-lg 
+                       bg-primary-700 px-6 py-3 text-base font-medium text-white 
+                       hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 
+                       transition dark:focus:ring-primary-900"
+          >
+            Browse All Jobs
+            <svg
+              className="ml-2 h-5 w-5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 
+                   1.414l-6 6a1 1 0 01-1.414-1.414L14.586 
+                   11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 
+                   010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </a>
+
+          <a
+            href="/post-job"
+            className="rounded-lg border border-gray-300 px-6 py-3 
+                       text-base font-medium text-gray-900 hover:bg-gray-100 
+                       transition dark:border-gray-700 dark:text-white 
+                       dark:hover:bg-gray-700"
+          >
+            Post a Job (Free)
+          </a>
+        </div>
+
+        {/* ================= Trusted Companies ================= */}
+        <div className="mx-auto max-w-screen-lg text-center">
+          <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+            Trusted by world-class companies
+          </span>
+
+          <div
+            className="mt-8 flex flex-wrap justify-center gap-8 
+                          text-gray-500 opacity-60 grayscale 
+                          hover:grayscale-0 transition"
+          >
+            <span className="text-xl font-bold">GOOGLE</span>
+            <span className="text-xl font-bold">STRIPE</span>
+            <span className="text-xl font-bold">AIRBNB</span>
+            <span className="text-xl font-bold">VERCEL</span>
           </div>
-        </div> 
+        </div>
       </div>
     </section>
   );
