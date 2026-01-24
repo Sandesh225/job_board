@@ -2,45 +2,93 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
-import { logout } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 export function Header() {
   const supabase = createClient();
-  const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setIsDark(document.documentElement.classList.contains("dark"));
 
     // Get initial user state
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user ?? null);
+    const initAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user ?? null);
     };
-    getUser();
+    initAuth();
 
     // Subscribe to auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔔 Auth event:", event);
+
+      // Update user state immediately
       setUser(session?.user ?? null);
+
+      // Handle different auth events
+      if (event === "SIGNED_IN") {
+        console.log("✅ User signed in:", session?.user?.email);
+
+        const userName =
+          session?.user?.user_metadata?.full_name?.split(" ")[0] ||
+          session?.user?.email?.split("@")[0] ||
+          "User";
+
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          toast.success(`Welcome back, ${userName}!`);
+        }, 200);
+
+        router.refresh();
+      } else if (event === "SIGNED_OUT") {
+        console.log("👋 User signed out");
+        router.refresh();
+      } else if (event === "TOKEN_REFRESHED") {
+        console.log("🔄 Token refreshed");
+        router.refresh();
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase, router]);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
+
     try {
-      await logout();
-      // The server action will handle the redirect and revalidation
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        toast.error("Failed to log out. Please try again.");
+        setIsLoggingOut(false);
+        return;
+      }
+
+      toast.success("Logged out successfully");
+
+      // Small delay before redirect
+      setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 100);
     } catch (error) {
       console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+      setIsLoggingOut(false);
     }
   };
 
@@ -56,10 +104,8 @@ export function Header() {
     setIsDark(!isDark);
   };
 
-  // --- Logic Improvements ---
   const userRole = user?.user_metadata?.role;
   const fullName = user?.user_metadata?.full_name;
-  // Get first name from full name, or fallback to email prefix if name is missing
   const displayName = fullName
     ? fullName.split(" ")[0]
     : user?.email?.split("@")[0];
@@ -112,9 +158,10 @@ export function Header() {
 
               <button
                 onClick={handleLogout}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+                disabled={isLoggingOut}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Logout
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </button>
             </div>
           ) : (
