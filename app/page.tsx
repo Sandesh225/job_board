@@ -3,15 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
-import CTASection from "@/components/CTASection";
+
+// Import all sections
+import Hero from "@/components/sections/Hero";
+import ProblemSolution from "@/components/sections/ProblemSolution";
+import Features from "@/components/sections/Features";
+import HowItWorks from "@/components/sections/HowItWorks";
+import Pricing from "@/components/sections/Pricing";
+import Testimonials from "@/components/sections/Testimonials";
+import FAQ from "@/components/sections/FAQ";
+import FinalCTA from "@/components/sections/FinalCTA";
 
 export default function Home() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
 
+  // Auth check - redirect to dashboard if logged in
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -19,10 +27,8 @@ export default function Home() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        // If user is logged in, send them to dashboard
         router.replace("/dashboard");
       } else {
-        // If no user, stop loading and show the landing page
         setLoading(false);
       }
     };
@@ -30,17 +36,22 @@ export default function Home() {
     checkUser();
   }, [router, supabase]);
 
-  // While checking the session, show a clean background
-  // to prevent the landing page from "flickering"
+  // Show loading state while checking auth
   if (loading) {
     return <div className="min-h-screen bg-white dark:bg-gray-900" />;
   }
 
+  // Render all sections
   return (
-    <div className="bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
       <Hero />
+      <ProblemSolution />
       <Features />
-      <CTASection />
+      <HowItWorks />
+      <Pricing />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA />
     </div>
   );
 }
