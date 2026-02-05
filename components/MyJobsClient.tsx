@@ -2,6 +2,9 @@
 
 import React, { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { Briefcase, Users, Calendar, Search } from "lucide-react";
+import SaasButton from "@/components/button-saas";
+import { Card, CardContent, CardHeader } from "@/components/card-saas";
 
 // ============================================================================
 // Types & Interfaces
@@ -62,21 +65,21 @@ const StatsCard: React.FC<StatsCardProps> = ({
   iconColor,
 }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-            {value}
-          </p>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground font-medium">{title}</p>
+            <p className="text-3xl font-bold text-foreground mt-2">{value}</p>
+          </div>
+          <div
+            className={`h-12 w-12 rounded-full ${bgColor} flex items-center justify-center`}
+          >
+            <div className={iconColor}>{icon}</div>
+          </div>
         </div>
-        <div
-          className={`h-12 w-12 rounded-full ${bgColor} flex items-center justify-center`}
-        >
-          <div className={iconColor}>{icon}</div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
