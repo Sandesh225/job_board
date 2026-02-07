@@ -43,7 +43,7 @@ export function ProblemSolutionSection() {
           </div>
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground text-balance mb-4">
             Your Job Search Challenges,
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text ">
               {" "}
               Solved
             </span>
