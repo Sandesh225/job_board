@@ -1,6 +1,8 @@
 import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeModeScript } from "flowbite-react";
+import { Toaster } from "sonner";
 
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -46,9 +48,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <ThemeModeScript />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground dark:bg-background dark:text-foreground`}
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground`}
       >
+        <Toaster position="top-right" richColors closeButton />
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="flex-grow pt-16">{children}</main>

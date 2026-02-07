@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (!applicationId) {
       return NextResponse.json(
         { error: "Application ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       console.error("Application not found:", error);
       return NextResponse.json(
         { error: "Application not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -40,20 +40,27 @@ export async function GET(request: NextRequest) {
       console.error("Session ID mismatch");
       return NextResponse.json(
         { error: "Unauthorized access" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    console.log(`✅ Payment verified: isPaid=${application.is_paid}, hasLetter=${!!application.generated_letter}`);
+    // Check payment status via Stripe OR if letter was generated
+    // A generated letter means payment was successful
+    const isPaid =
+      application.is_paid === true || !!application.generated_letter;
+    const hasLetter = !!application.generated_letter;
+
+    console.log(
+      `✅ Payment verified: isPaid=${isPaid}, hasLetter=${hasLetter}`,
+    );
 
     return NextResponse.json({
       success: true,
-      isPaid: application.is_paid || false,
-      hasLetter: !!application.generated_letter,
-      letter: application.is_paid ? application.generated_letter : null,
+      isPaid: isPaid, // Return true if payment is confirmed OR letter exists
+      hasLetter: hasLetter,
+      letter: isPaid && hasLetter ? application.generated_letter : null,
       preview: application.preview_text,
     });
-
   } catch (error: any) {
     console.error("❌ Verify payment error:", error);
     return NextResponse.json(

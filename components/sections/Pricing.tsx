@@ -63,18 +63,21 @@ export function PricingSection() {
   const router = useRouter();
 
   return (
-    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-background dark:bg-background">
+    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-background">
       <div className="mx-auto max-w-screen-xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 dark:bg-primary/20 dark:border-primary/30 mb-6">
-            <span className="text-sm font-semibold text-primary">Simple Pricing</span>
+          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <span className="text-sm font-semibold text-primary">
+              Simple Pricing
+            </span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground text-balance mb-4">
             Choose Your Plan
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Flexible pricing that scales with your job search. Start free, upgrade anytime.
+            Flexible pricing that scales with your job search. Start free,
+            upgrade anytime.
           </p>
         </div>
 
@@ -85,8 +88,8 @@ export function PricingSection() {
               key={index}
               className={`relative flex flex-col ${
                 plan.highlighted
-                  ? 'border-primary shadow-xl scale-105 md:scale-100 lg:scale-105'
-                  : 'border-border'
+                  ? "border-primary shadow-xl scale-105 md:scale-100 lg:scale-105"
+                  : "border-border"
               } transition-all duration-300 hover:shadow-lg`}
             >
               {plan.highlighted && (
@@ -96,15 +99,21 @@ export function PricingSection() {
               )}
 
               <CardHeader>
-                <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
-                <p className="text-muted-foreground text-sm mt-2">{plan.description}</p>
+                <h3 className="text-2xl font-bold text-foreground">
+                  {plan.name}
+                </h3>
+                <p className="text-muted-foreground text-sm mt-2">
+                  {plan.description}
+                </p>
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col">
                 {/* Price */}
                 <div className="mb-6">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-bold text-foreground">{plan.price}</span>
+                    <span className="text-5xl font-bold text-foreground">
+                      {plan.price}
+                    </span>
                     <span className="text-muted-foreground">{plan.period}</span>
                   </div>
                 </div>
@@ -123,14 +132,14 @@ export function PricingSection() {
 
                 {/* CTA Button */}
                 <SaasButton
-                  variant={plan.highlighted ? 'primary' : 'outline'}
+                  variant={plan.highlighted ? "primary" : "outline"}
                   size="lg"
                   className="w-full justify-center"
                   onClick={() => {
-                    if (plan.cta === 'Contact Sales') {
-                      router.push('/contact');
+                    if (plan.cta === "Contact Sales") {
+                      router.push("/contact");
                     } else {
-                      router.push('/generate');
+                      router.push("/generate");
                     }
                   }}
                 >
@@ -140,7 +149,7 @@ export function PricingSection() {
             </Card>
           ))}
         </div>
-</div>
+      </div>
     </section>
   );
 }

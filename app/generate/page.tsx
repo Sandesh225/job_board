@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { Loader, Copy, Download, Zap, AlertCircle, CheckCircle2, Lock, FileText, Briefcase } from 'lucide-react';
+import { Loader, Copy, Download, Zap, AlertCircle, CheckCircle2, Lock, FileText, Briefcase, Sparkles } from 'lucide-react';
 import SaasButton from '@/components/button-saas';
 import { Card, CardContent, CardHeader } from '@/components/card-saas';
-// Assuming Input is available, though we primarily use textarea here
-import Input from '@/components/input-saas';
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -29,34 +27,32 @@ export default function GeneratePage() {
 
   const tones = [
     { value: 'professional', label: 'Professional' },
-    { value: 'friendly', label: 'Friendly & Approachable' },
-    { value: 'confident', label: 'Confident & Bold' },
-    { value: 'creative', label: 'Creative & Unique' },
-    { value: 'formal', label: 'Formal & Academic' },
+    { value: 'friendly', label: 'Friendly' },
+    { value: 'confident', label: 'Confident' },
+    { value: 'creative', label: 'Creative' },
+    { value: 'formal', label: 'Formal' },
   ];
 
-  // 1. Initialize Session & Check for Return from Stripe
+  // 1. Initialize Session
   useEffect(() => {
-    // Session Management
-    let id = localStorage.getItem("jobappai_session_id");
+    let id = localStorage.getItem('jobappai_session_id');
     if (!id) {
       id = uuidv4();
-      localStorage.setItem("jobappai_session_id", id);
+      localStorage.setItem('jobappai_session_id', id);
     }
     setAnonymousId(id);
 
-    // Check for payment return
     const app_id = searchParams.get('applicationId');
     const session_id = searchParams.get('session_id');
 
     if (app_id && session_id) {
       setApplicationId(app_id);
-      setStep('generating'); // Show loader while verifying
+      setStep('generating');
       verifyPayment(app_id);
     }
   }, [searchParams]);
 
-  // 2. Verify Payment (Fetch Full Letter)
+  // 2. Verify Payment
   const verifyPayment = async (appId: string) => {
     try {
       const res = await fetch(`/api/verify-payment?applicationId=${appId}`);
@@ -64,13 +60,11 @@ export default function GeneratePage() {
       
       if (data.success && data.isPaid) {
         setIsPaid(true);
-        setGeneratedLetter(data.letter); // Full text
+        setGeneratedLetter(data.letter);
         setStep('result');
-        // Clean URL
         router.replace('/generate');
       } else {
-        // Payment failed or pending
-        alert("Payment verification failed. Please contact support.");
+        alert('Payment verification failed. Please contact support.');
         setStep('input');
       }
     } catch (error) {
@@ -79,7 +73,7 @@ export default function GeneratePage() {
     }
   };
 
-  // 3. Generate Draft (API Call)
+  // 3. Generate Draft
   const handleGenerate = async () => {
     if (!jobDescription.trim() || !resumeText.trim()) {
       alert('Please enter both your Resume and the Job Description');
@@ -89,24 +83,19 @@ export default function GeneratePage() {
     setStep('generating');
 
     try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          resumeText, 
-          jobDescription, 
-          tone, 
-          anonymousId 
-        }),
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeText, jobDescription, tone, anonymousId }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || "Failed to generate");
+      if (!response.ok) throw new Error(data.error || 'Failed to generate');
 
-      setGeneratedLetter(data.letter); // This is the PREVIEW text
+      setGeneratedLetter(data.letter);
       setApplicationId(data.applicationId);
-      setIsPaid(false); // Default to locked
+      setIsPaid(false);
       setStep('result');
 
     } catch (error: any) {
@@ -115,27 +104,27 @@ export default function GeneratePage() {
     }
   };
 
-  // 4. Handle Checkout (Stripe)
+  // 4. Handle Checkout
   const handleCheckout = async () => {
     if (!applicationId) return;
     setIsCheckingOut(true);
 
     try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId }),
       });
       
       const data = await response.json();
       
       if (data.url) {
-        window.location.href = data.url; // Redirect to Stripe
+        window.location.href = data.url;
       } else {
-        throw new Error("No checkout URL returned");
+        throw new Error('No checkout URL returned');
       }
     } catch (err: any) {
-      alert("Checkout failed. Please try again.");
+      alert('Checkout failed. Please try again.');
       setIsCheckingOut(false);
     }
   };
@@ -158,10 +147,14 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-primary">AI-Powered</span>
+          </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
             Generate Your Cover Letter
           </h1>
@@ -172,17 +165,28 @@ export default function GeneratePage() {
 
         {/* Progress Indicator */}
         <div className="flex items-center justify-center gap-2 mb-12">
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-colors duration-300 ${step === 'input' ? 'bg-primary text-primary-foreground' : 'bg-success text-success'}`}>
-            1
-          </div>
-          <div className="h-1 w-12 bg-border" />
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-colors duration-300 ${step === 'generating' ? 'bg-primary text-primary-foreground' : step === 'result' ? 'bg-success text-success' : 'bg-muted text-muted-foreground'}`}>
-            2
-          </div>
-          <div className="h-1 w-12 bg-border" />
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-colors duration-300 ${step === 'result' && isPaid ? 'bg-success text-success' : step === 'result' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-            3
-          </div>
+          {[1, 2, 3].map((num) => (
+            <div key={num} className="flex items-center gap-2">
+              <div
+                className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all duration-300 ${
+                  step === 'input' && num === 1
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : step === 'generating' && num === 2
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : step === 'result'
+                    ? num <= (isPaid ? 3 : 2)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                    : num <= 1
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {num}
+              </div>
+              {num < 3 && <div className="h-1 w-12 bg-border" />}
+            </div>
+          ))}
         </div>
 
         {/* Step 1: Input */}
@@ -194,7 +198,7 @@ export default function GeneratePage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 
-                {/* Resume Input (Added for API Logic) */}
+                {/* Resume Input */}
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
                     <FileText className="w-4 h-4 text-primary" />
@@ -204,7 +208,7 @@ export default function GeneratePage() {
                     value={resumeText}
                     onChange={(e) => setResumeText(e.target.value)}
                     placeholder="Paste your full resume text here..."
-                    className="w-full h-48 p-4 rounded-lg border border-input bg-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+                    className="w-full h-48 p-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none transition-all"
                   />
                 </div>
 
@@ -218,7 +222,7 @@ export default function GeneratePage() {
                     value={jobDescription}
                     onChange={(e) => setJobDescription(e.target.value)}
                     placeholder="Paste the job posting here..."
-                    className="w-full h-48 p-4 rounded-lg border border-input bg-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+                    className="w-full h-48 p-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none transition-all"
                   />
                   <p className="text-sm text-muted-foreground mt-2">
                     Include job title, company details, and key requirements
@@ -235,10 +239,10 @@ export default function GeneratePage() {
                       <button
                         key={t.value}
                         onClick={() => setTone(t.value)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        className={`px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
                           tone === t.value
-                            ? 'bg-primary text-primary-foreground shadow-md transform scale-105'
-                            : 'bg-secondary text-foreground hover:bg-secondary/80'
+                            ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                            : 'bg-secondary text-foreground hover:bg-secondary/80 border border-border'
                         }`}
                       >
                         {t.label}
@@ -262,25 +266,21 @@ export default function GeneratePage() {
 
             {/* Info Cards */}
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="bg-info/5 border-info/20 dark:bg-info/10 dark:border-info/30">
-                <CardContent className="pt-6 pb-6">
-                  <div className="flex gap-3">
-                    <Zap className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="font-semibold text-foreground">60 Seconds</h3>
-                      <p className="text-sm text-muted-foreground">Get your letter generated instantly</p>
-                    </div>
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="pt-6 pb-6 flex gap-3">
+                  <Zap className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-foreground">60 Seconds</h3>
+                    <p className="text-sm text-muted-foreground">Get your letter instantly</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-success/5 border-success/20 dark:bg-success/10 dark:border-success/30">
-                <CardContent className="pt-6 pb-6">
-                  <div className="flex gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="font-semibold text-foreground">ATS-Optimized</h3>
-                      <p className="text-sm text-muted-foreground">Passes automated screening systems</p>
-                    </div>
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="pt-6 pb-6 flex gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-foreground">ATS-Optimized</h3>
+                    <p className="text-sm text-muted-foreground">Passes screening systems</p>
                   </div>
                 </CardContent>
               </Card>
@@ -290,7 +290,7 @@ export default function GeneratePage() {
 
         {/* Step 2: Generating */}
         {step === 'generating' && (
-          <Card className="text-center animate-in fade-in zoom-in duration-300">
+          <Card className="text-center">
             <CardContent className="pt-12 pb-12">
               <Loader className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -303,22 +303,22 @@ export default function GeneratePage() {
           </Card>
         )}
 
-        {/* Step 3: Result (With Paywall Logic) */}
+        {/* Step 3: Result */}
         {step === 'result' && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             
             {/* Status Banner */}
-            <Card className={`${isPaid ? 'bg-success/5 border-success/20' : 'bg-primary/5 border-primary/20'}`}>
+            <Card className={`${isPaid ? 'bg-primary/5 border-primary/20' : 'bg-primary/5 border-primary/20'}`}>
               <CardContent className="pt-6 pb-6 flex items-center gap-3">
                 {isPaid ? (
-                  <CheckCircle2 className="w-6 h-6 text-success flex-shrink-0" />
+                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0" />
                 ) : (
                   <Lock className="w-6 h-6 text-primary flex-shrink-0" />
                 )}
                 <div>
-                  <h3 className="font-semibold text-foreground">{isPaid ? "Success!" : "Draft Ready"}</h3>
+                  <h3 className="font-semibold text-foreground">{isPaid ? 'Success!' : 'Draft Ready'}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {isPaid ? "Your cover letter is ready for download." : "Your cover letter has been generated. Unlock to view."}
+                    {isPaid ? 'Your cover letter is ready for download.' : 'Your cover letter has been generated. Unlock to view.'}
                   </p>
                 </div>
               </CardContent>
@@ -335,17 +335,16 @@ export default function GeneratePage() {
                   {/* The Text Content */}
                   <div className={`bg-secondary/50 p-6 whitespace-pre-wrap text-foreground leading-relaxed transition-all duration-500 ${!isPaid ? 'blur-[6px] select-none h-64 overflow-hidden' : ''}`}>
                     {generatedLetter}
-                    {!isPaid && `\n\n[...Hidden Content...]\n\nSincerely,\n[Your Name]`}
                   </div>
 
-                  {/* Paywall Overlay (Only if !isPaid) */}
+                  {/* Paywall Overlay */}
                   {!isPaid && (
                     <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center z-10">
-                      <div className="bg-background border border-border p-8 rounded-xl shadow-2xl max-w-sm w-full">
+                      <div className="bg-card border border-border p-8 rounded-xl shadow-2xl max-w-sm w-full">
                         <Zap className="w-10 h-10 text-primary mx-auto mb-4" />
                         <h3 className="text-xl font-bold text-foreground mb-2">Unlock Full Letter</h3>
                         <p className="text-muted-foreground mb-6 text-sm">
-                          Get the complete, unblurred, ATS-optimized version tailored to this job.
+                          Get the complete, unblurred version tailored to this job.
                         </p>
                         <SaasButton
                           onClick={handleCheckout}
@@ -368,12 +367,12 @@ export default function GeneratePage() {
                   )}
                 </div>
 
-                {/* Actions (Only enabled if Paid) */}
+                {/* Actions */}
                 {isPaid && (
-                  <div className="flex flex-col sm:flex-row gap-3 animate-in fade-in duration-500">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <SaasButton
                       onClick={handleCopy}
-                      variant={copied ? 'success' : 'secondary'}
+                      variant={copied ? 'primary' : 'secondary'}
                       size="lg"
                       className="gap-2"
                     >
@@ -407,16 +406,14 @@ export default function GeneratePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-info/5 border-info/20 dark:bg-info/10 dark:border-info/30">
-              <CardContent className="pt-6 pb-6">
-                <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">Pro Tip</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Customize the letter to add personal touches and specific examples from your experience. Personalized letters have higher success rates.
-                    </p>
-                  </div>
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="pt-6 pb-6 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">Pro Tip</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Customize the letter to add personal touches and specific examples. Personalized letters have higher success rates.
+                  </p>
                 </div>
               </CardContent>
             </Card>

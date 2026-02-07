@@ -36,18 +36,21 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
+    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-background to-primary/5">
       <div className="mx-auto max-w-screen-xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 dark:bg-primary/20 dark:border-primary/30 mb-6">
-            <span className="text-sm font-semibold text-primary">Simple Process</span>
+          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <span className="text-sm font-semibold text-primary">
+              Simple Process
+            </span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground text-balance mb-4">
             Four Simple Steps to Success
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            From job posting to application - everything streamlined and automated.
+            From job posting to application - everything streamlined and
+            automated.
           </p>
         </div>
 
@@ -72,14 +75,19 @@ export function HowItWorksSection() {
                     <div className="inline-flex p-3 rounded-lg bg-primary/10 text-primary mb-4">
                       <Icon className="w-6 h-6" />
                     </div>
-                    <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                    <h3 className="text-xl font-bold text-foreground">
+                      {step.title}
+                    </h3>
                   </CardHeader>
 
                   <CardContent className="space-y-4">
                     <p className="text-muted-foreground">{step.description}</p>
                     <ul className="space-y-2">
                       {step.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <li
+                          key={i}
+                          className="flex items-center gap-2 text-sm text-muted-foreground"
+                        >
                           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                           {feature}
                         </li>
@@ -93,7 +101,7 @@ export function HowItWorksSection() {
         </div>
 
         {/* Testimonial */}
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 dark:from-primary/20 dark:to-primary/10 dark:border-primary/30">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="pt-8 pb-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
@@ -101,14 +109,20 @@ export function HowItWorksSection() {
                   "This saved me hours every week!"
                 </p>
                 <p className="text-muted-foreground mb-4">
-                  Used to spend 2-3 hours on each cover letter. Now I can apply to 5+ jobs per day with personalized letters. Landed my dream job in 2 weeks.
+                  Used to spend 2-3 hours on each cover letter. Now I can apply
+                  to 5+ jobs per day with personalized letters. Landed my dream
+                  job in 2 weeks.
                 </p>
                 <p className="font-semibold text-foreground">Sarah M.</p>
-                <p className="text-sm text-muted-foreground">Senior Product Manager at TechCorp</p>
+                <p className="text-sm text-muted-foreground">
+                  Senior Product Manager at TechCorp
+                </p>
               </div>
               <div className="bg-muted/30 rounded-lg p-6 border border-border">
                 <div className="text-4xl font-bold text-primary mb-2">10x</div>
-                <p className="text-muted-foreground">Faster application process on average</p>
+                <p className="text-muted-foreground">
+                  Faster application process on average
+                </p>
               </div>
             </div>
           </CardContent>

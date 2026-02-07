@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, HelpCircle, Mail, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '../card-saas';
 
 const faqs = [
@@ -57,26 +57,38 @@ const faqs = [
   },
 ];
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+function FAQItem({ question, answer, index }: { question: string; answer: string; index: number }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Card className="border-border overflow-hidden">
+    <Card className="border-border bg-card overflow-hidden hover:shadow-md transition-all duration-300 group">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between gap-4 text-left hover:bg-secondary/30 transition-colors"
+        className="w-full p-6 flex items-center justify-between gap-4 text-left hover:bg-secondary/50 transition-colors duration-300 group-hover:bg-secondary/30"
       >
-        <h3 className="font-semibold text-foreground flex-1">{question}</h3>
+        <div className="flex items-start gap-3 flex-1">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary flex-shrink-0 mt-0.5 font-semibold text-xs">
+            {index + 1}
+          </div>
+          <h3 className="font-semibold text-foreground flex-1 text-left">
+            {question}
+          </h3>
+        </div>
         <ChevronDown
           className={`w-5 h-5 text-primary flex-shrink-0 transition-transform duration-300 ${
-            isOpen ? 'rotate-180' : ''
+            isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {isOpen && (
-        <CardContent className="border-t border-border px-6 py-4 bg-secondary/10">
-          <p className="text-muted-foreground leading-relaxed">{answer}</p>
+        <CardContent className="border-t border-border px-6 py-4 bg-secondary/30 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex gap-4">
+            <div className="w-1 bg-primary rounded-full flex-shrink-0" />
+            <p className="text-muted-foreground leading-relaxed">
+              {answer}
+            </p>
+          </div>
         </CardContent>
       )}
     </Card>
@@ -85,50 +97,66 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export function FAQSection() {
   return (
-    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-background to-primary/5 dark:from-background dark:via-background dark:to-primary/10">
+    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-background">
+      {/* Background gradient - uses CSS variables */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 -z-10" />
+
       <div className="mx-auto max-w-screen-xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 dark:bg-primary/20 dark:border-primary/30 mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <HelpCircle className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold text-primary">Questions?</span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground text-balance mb-4">
             Frequently Asked Questions
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to know about JobBoard.
+            Everything you need to know about JobBoard and how to get started.
           </p>
         </div>
 
         {/* FAQ Grid */}
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-3xl mx-auto space-y-4 mb-12">
           {faqs.map((faq, index) => (
-            <FAQItem key={index} question={faq.question} answer={faq.answer} />
+            <FAQItem key={index} question={faq.question} answer={faq.answer} index={index} />
           ))}
         </div>
 
-        {/* CTA Section */}
-        <div className="mt-16 text-center">
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 dark:from-primary/20 dark:to-primary/10 dark:border-primary/30">
-            <CardContent className="pt-12 pb-12">
-              <h3 className="text-2xl font-bold text-foreground mb-2">Still have questions?</h3>
-              <p className="text-muted-foreground mb-6">
-                Our support team is here to help. Reach out anytime.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* CTA Section - Enhanced */}
+        <div className="mt-16">
+          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.05),transparent)] pointer-events-none" />
+            <CardContent className="pt-12 pb-12 relative z-10">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-bold text-foreground mb-2">
+                  Still have questions?
+                </h3>
+                <p className="text-muted-foreground">
+                  Our support team is here to help. Reach out anytime.
+                </p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4 max-w-md mx-auto">
                 <a
                   href="mailto:support@jobboard.app"
-                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:scale-105 group"
                 >
-                  Email Support
+                  <Mail className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                  <span>Email Support</span>
                 </a>
                 <a
                   href="https://chat.jobboard.app"
-                  className="inline-flex items-center justify-center px-6 py-3 rounded-lg border border-primary text-primary font-semibold hover:bg-primary/5 transition-colors"
+                  className="inline-flex items-center justify-center gap-3 px-6 py-4 rounded-lg border-2 border-primary text-primary hover:bg-primary/10 transition-all duration-300 hover:shadow-lg hover:scale-105 group font-semibold"
                 >
-                  Live Chat
+                  <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <span>Live Chat</span>
                 </a>
               </div>
+
+              <p className="text-xs text-muted-foreground text-center mt-6">
+                Average response time: 2 hours
+              </p>
             </CardContent>
           </Card>
         </div>

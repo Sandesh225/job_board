@@ -38,12 +38,12 @@ export default function Home() {
 
   // Show loading state while checking auth
   if (loading) {
-    return <div className="min-h-screen bg-white dark:bg-gray-900" />;
+    return <div className="min-h-screen bg-background" />;
   }
 
   // Render all sections
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Hero />
       <ProblemSolution />
       <Features />

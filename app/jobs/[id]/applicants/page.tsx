@@ -17,7 +17,9 @@ export default async function JobApplicantsPage({ params }: PageProps) {
   const supabase = await createClient();
 
   // Check authentication
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");

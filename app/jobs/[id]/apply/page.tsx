@@ -6,45 +6,46 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Job application page
+ * Only job-seekers allowed
+ */
 export default async function ApplyJobPage({ params }: PageProps) {
-  // 1. Await the params (Next.js 15 requirement)
   const { id } = await params;
   const supabase = await createClient();
 
-  // 2. Check Auth
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   if (!user) {
-    console.log("Redirecting: No user found");
     redirect("/login");
   }
 
-  // 3. Check Role
+  // Get role from profiles table
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
+  // Enforce job-seeker role
   if (profile?.role !== "job-seeker") {
-    console.log(`Redirecting: User role is ${profile?.role}, not job-seeker`);
     redirect(`/jobs/${id}`);
   }
 
-  // 4. Fetch Job
-  const { data: job, error: jobError } = await supabase
+  // Fetch job data
+  const { data: job, error } = await supabase
     .from("jobs")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (jobError || !job) {
-    console.log("Error: Job not found");
+  if (error || !job) {
     notFound();
   }
 
-  // 5. Prevent Duplicate Applications
+  // Prevent duplicate applications
   const { data: existingApplication } = await supabase
     .from("applications")
     .select("id")
@@ -53,10 +54,8 @@ export default async function ApplyJobPage({ params }: PageProps) {
     .maybeSingle();
 
   if (existingApplication) {
-    console.log("Redirecting: Application already exists");
     redirect(`/jobs/${id}`);
   }
 
-  // 6. If all checks pass, render the client form
   return <ApplyJobClient job={job} user={user} />;
 }

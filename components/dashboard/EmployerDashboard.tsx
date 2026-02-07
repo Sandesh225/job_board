@@ -1,15 +1,22 @@
-// ========================================
-// 2. components/dashboard/EmployerDashboard.tsx
-// ========================================
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { createClient } from "@/lib/client";
-import { Briefcase, Users, FileText, Plus, Loader } from "lucide-react";
-import SaasButton from "../button-saas";
-import { Card, CardContent, CardHeader } from "../card-saas";
-import { JSX } from "react";
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/lib/client';
+import {
+  Briefcase,
+  CheckCircle2,
+  Users,
+  Plus,
+  Eye,
+  FileText,
+  TrendingUp,
+  Calendar,
+  MapPin,
+  Loader2,
+  ArrowRight,
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/card-saas';
 
 interface Job {
   id: string;
@@ -39,16 +46,16 @@ export default function EmployerDashboard({ user }: EmployerDashboardProps) {
   useEffect(() => {
     async function fetchEmployerData() {
       const { data: jobsData } = await supabase
-        .from("jobs")
+        .from('jobs')
         .select(`*, applications(count)`)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (jobsData) {
         setJobs(jobsData);
         const totalApps = jobsData.reduce(
           (sum, job) => sum + (job.applications?.[0]?.count || 0),
-          0,
+          0
         );
         setStats({
           totalJobs: jobsData.length,
@@ -65,226 +72,239 @@ export default function EmployerDashboard({ user }: EmployerDashboardProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen pt-20">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <div className="text-lg font-medium text-muted-foreground">
+            Loading your dashboard...
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 pb-12 pt-20">
-      <div className="space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="h2 text-foreground">Employer Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
-              Welcome back! Here is what's happening with your job posts.
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-foreground">
+              Employer Dashboard
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Welcome back! Here's what's happening with your job posts.
             </p>
           </div>
-          <SaasButton asChild variant="primary" size="lg" className="gap-2">
-            <Link href="/jobs/post">
-              <Plus className="w-5 h-5" />
-              Post New Job
-            </Link>
-          </SaasButton>
+          <Link
+            href="/jobs/post"
+            className="group inline-flex items-center gap-2 justify-center rounded-xl bg-gradient-to-r from-primary to-primary/90 px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-105"
+          >
+            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+            Post New Job
+          </Link>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">
-                    Total Jobs Posted
-                  </p>
-                  <p className="text-3xl font-bold text-foreground mt-2">
-                    {stats.totalJobs}
-                  </p>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Total Jobs Card */}
+          <Card className="bg-card border-border group hover:shadow-lg transition-all duration-300 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500" />
+            <CardContent className="pt-6 pb-6 relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center ring-4 ring-primary/5 group-hover:ring-primary/10 transition-all duration-300">
+                  <Briefcase className="w-6 h-6 text-primary" />
                 </div>
-                <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-primary-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
+                <TrendingUp className="w-5 h-5 text-primary/40 group-hover:text-primary/60 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Jobs Posted
+                </p>
+                <p className="text-3xl font-bold text-foreground">
+                  {stats.totalJobs}
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 dark:bg-gray-800 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          {/* Active Listings Card */}
+          <Card className="bg-card border-border group hover:shadow-lg transition-all duration-300 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500" />
+            <CardContent className="pt-6 pb-6 relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center ring-4 ring-primary/5 group-hover:ring-primary/10 transition-all duration-300">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  Live
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
                   Active Listings
                 </p>
-                <p className="text-2xl font-bold text-heading mt-2 dark:text-white">
+                <p className="text-3xl font-bold text-foreground">
                   {stats.activeListings}
                 </p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 dark:bg-gray-800 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          {/* Total Applications Card */}
+          <Card className="bg-card border-border group hover:shadow-lg transition-all duration-300 overflow-hidden relative sm:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500" />
+            <CardContent className="pt-6 pb-6 relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center ring-4 ring-primary/5 group-hover:ring-primary/10 transition-all duration-300">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <FileText className="w-5 h-5 text-primary/40 group-hover:text-primary/60 transition-colors" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
                   Total Applications
                 </p>
-                <p className="text-2xl font-bold text-heading mt-2 dark:text-white">
+                <p className="text-3xl font-bold text-foreground">
                   {stats.totalApplications}
                 </p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden dark:bg-gray-800 dark:border-gray-700">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-heading dark:text-white">
-              Your Job Listings
-            </h2>
+        {/* Job Listings Section */}
+        <Card className="bg-card border-border shadow-lg overflow-hidden">
+          <div className="px-6 py-5 border-b border-border bg-secondary/20">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-foreground">
+                Your Job Listings
+              </h2>
+              {jobs.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'}
+                </span>
+              )}
+            </div>
           </div>
 
           {jobs.length === 0 ? (
-            <div className="text-center py-16">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-heading dark:text-white">
-                No jobs posted
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Get started by posting your first job listing.
-              </p>
-              <div className="mt-6">
-                <Link
-                  href="/jobs/post"
-                  className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
-                >
-                  Post a Job
-                </Link>
+            <div className="text-center py-20 px-4">
+              <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                <Briefcase className="w-10 h-10 text-primary/60" />
               </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No jobs posted yet
+              </h3>
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                Get started by posting your first job listing and start receiving applications from qualified candidates.
+              </p>
+              <Link
+                href="/jobs/post"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-105"
+              >
+                <Plus className="w-5 h-5" />
+                Post Your First Job
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 text-gray-700 text-xs uppercase dark:bg-gray-700/50 dark:text-gray-300">
+              <table className="w-full">
+                <thead className="bg-secondary/30 border-b border-border">
                   <tr>
-                    <th className="px-6 py-4">Job Title</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Applications</th>
-                    <th className="px-6 py-4">Posted</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Job Details
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Applications
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Posted
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {jobs.map((job) => (
                     <tr
                       key={job.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                      className="group hover:bg-secondary/30 transition-all duration-200"
                     >
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-heading dark:text-white">
-                          {job.title}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {job.location}
+                      <td className="px-6 py-5">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {job.title}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {job.location}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+                      <td className="px-6 py-5">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                           {job.job_type}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         {job.is_active ? (
-                          <span className="flex items-center text-xs font-medium text-green-600 dark:text-green-400">
-                            <span className="mr-1.5 h-2 w-2 rounded-full bg-green-600"></span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                             Active
                           </span>
                         ) : (
-                          <span className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                            <span className="mr-1.5 h-2 w-2 rounded-full bg-gray-400"></span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-muted text-muted-foreground border border-border">
+                            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
                             Inactive
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-heading font-bold dark:text-white">
-                            {getApplicationCount(job)}
-                          </span>
-                          <span className="text-[10px] text-gray-500 uppercase">
-                            Applicants
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/20">
+                            <span className="text-lg font-bold text-primary">
+                              {getApplicationCount(job)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            applicants
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                        {new Date(job.created_at).toLocaleDateString()}
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(job.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-4">
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/jobs/${job.id}`}
-                            className="text-primary-600 hover:text-primary-700 font-semibold dark:text-primary-400"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary hover:bg-secondary/80 text-foreground transition-all duration-200 hover:scale-105"
                           >
+                            <Eye className="w-4 h-4" />
                             View
                           </Link>
                           <Link
                             href={`/jobs/${job.id}/applicants`}
-                            className="text-gray-600 hover:text-gray-900 font-semibold dark:text-gray-400 dark:hover:text-white"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 border border-primary/20"
                           >
+                            <Users className="w-4 h-4" />
                             Applicants
                           </Link>
                         </div>
@@ -295,7 +315,7 @@ export default function EmployerDashboard({ user }: EmployerDashboardProps) {
               </table>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

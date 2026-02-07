@@ -32,27 +32,35 @@ const comparisons = [
 
 export function ProblemSolutionSection() {
   return (
-    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background to-primary/5 dark:from-primary/10 dark:via-background dark:to-primary/10">
+    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background to-primary/5">
       <div className="mx-auto max-w-screen-xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 dark:bg-primary/20 dark:border-primary/30 mb-6">
-            <span className="text-sm font-semibold text-primary">The Problem</span>
+          <div className="inline-block px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <span className="text-sm font-semibold text-primary">
+              The Problem
+            </span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground text-balance mb-4">
             Your Job Search Challenges,
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"> Solved</span>
+            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              {" "}
+              Solved
+            </span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            We fixed everything that makes job hunting frustrating and time-consuming.
+            We fixed everything that makes job hunting frustrating and
+            time-consuming.
           </p>
         </div>
 
         {/* Comparison Grid */}
         <div className="grid gap-6 md:grid-cols-2 mb-12">
-          <Card className="border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
+          <Card className="border-destructive/20 bg-destructive/5">
             <CardContent className="pt-8 pb-8">
-              <h3 className="text-xl font-bold text-foreground mb-6">Without Us</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">
+                Without Us
+              </h3>
               <ul className="space-y-4">
                 {comparisons.map((item, i) => (
                   <li key={i} className="flex gap-3">
@@ -64,9 +72,11 @@ export function ProblemSolutionSection() {
             </CardContent>
           </Card>
 
-          <Card className="border-success/20 bg-success/5 dark:bg-success/10">
+          <Card className="border-success/20 bg-success/5">
             <CardContent className="pt-8 pb-8">
-              <h3 className="text-xl font-bold text-foreground mb-6">With JobBoard</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">
+                With JobBoard
+              </h3>
               <ul className="space-y-4">
                 {comparisons.map((item, i) => (
                   <li key={i} className="flex gap-3">
@@ -85,19 +95,27 @@ export function ProblemSolutionSection() {
             <div className="grid md:grid-cols-4 gap-8 text-center">
               <div>
                 <p className="text-4xl font-bold mb-2">87%</p>
-                <p className="text-primary-foreground/90">Time saved on applications</p>
+                <p className="text-primary-foreground/90">
+                  Time saved on applications
+                </p>
               </div>
               <div>
                 <p className="text-4xl font-bold mb-2">40%</p>
-                <p className="text-primary-foreground/90">More interviews scheduled</p>
+                <p className="text-primary-foreground/90">
+                  More interviews scheduled
+                </p>
               </div>
               <div>
                 <p className="text-4xl font-bold mb-2">2.5x</p>
-                <p className="text-primary-foreground/90">Faster job placement</p>
+                <p className="text-primary-foreground/90">
+                  Faster job placement
+                </p>
               </div>
               <div>
                 <p className="text-4xl font-bold mb-2">$2.4K</p>
-                <p className="text-primary-foreground/90">Average salary increase</p>
+                <p className="text-primary-foreground/90">
+                  Average salary increase
+                </p>
               </div>
             </div>
           </CardContent>
