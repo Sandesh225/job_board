@@ -15,11 +15,11 @@ import {
   FileText, 
   Link2, 
   Send,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
   ChevronRight
 } from 'lucide-react';
+import { Input } from '@/components/input-saas';
+import { Textarea } from '@/ui/textarea'
+import { Button } from '@/components/button-saas';
 
 interface Job {
   id: string;
@@ -96,7 +96,6 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
     });
   };
 
-  const coverLetterProgress = Math.min((formData.coverLetter.length / MIN_COVER_LETTER_LENGTH) * 100, 100);
   const isCoverLetterValid = formData.coverLetter.length >= MIN_COVER_LETTER_LENGTH;
 
   return (
@@ -124,7 +123,7 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
         </nav>
 
         {/* Job Header Card */}
-        <div className="relative bg-gradient-to-br from-background to-secondary/50 backdrop-blur-sm border border-border rounded-2xl shadow-lg p-6 sm:p-8 mb-8 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-card to-secondary/50 backdrop-blur-sm border border-border rounded-2xl shadow-lg p-6 sm:p-8 mb-8 overflow-hidden">
           {/* Decorative background */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -z-10" />
           
@@ -134,7 +133,7 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
                 <Briefcase className="w-3.5 h-3.5" />
                 Job Application
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
                 {job.title}
               </h1>
               <p className="text-lg text-muted-foreground font-medium">{job.company}</p>
@@ -154,7 +153,7 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
         </div>
 
         {/* Application Form Card */}
-        <div className="bg-gradient-to-br from-background to-secondary/30 backdrop-blur-sm border border-border rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-gradient-to-br from-card to-secondary/30 backdrop-blur-sm border border-border rounded-2xl shadow-xl overflow-hidden">
           {/* Form Header */}
           <div className="px-6 sm:px-8 py-5 border-b border-border bg-secondary/20">
             <div className="flex items-center gap-3">
@@ -178,77 +177,57 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Full Name */}
-                <div className="space-y-2">
-                  <label htmlFor="fullName" className="block text-sm font-semibold text-foreground flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                    placeholder="Jane Doe"
-                  />
-                </div>
+                <Input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  label="Full Name"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required
+                  icon={<User className="w-4 h-4" />}
+                  placeholder="Jane Doe"
+                />
 
                 {/* Email */}
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                    placeholder="jane@company.com"
-                  />
-                </div>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  label="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  icon={<Mail className="w-4 h-4" />}
+                  placeholder="jane@company.com"
+                />
               </div>
 
               {/* Contact & Resume Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="phone" className="block text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                    placeholder="+1 (555) 000-0000"
-                  />
-                </div>
+                <Input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  label="Phone Number"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  icon={<Phone className="w-4 h-4" />}
+                  placeholder="+1 (555) 000-0000"
+                />
 
-                <div className="space-y-2">
-                  <label htmlFor="resumeUrl" className="block text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Link2 className="w-4 h-4 text-muted-foreground" />
-                    Resume Link <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="url"
-                    id="resumeUrl"
-                    name="resumeUrl"
-                    value={formData.resumeUrl}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                    placeholder="https://resume.com/yourname"
-                  />
-                </div>
+                <Input
+                  type="url"
+                  id="resumeUrl"
+                  name="resumeUrl"
+                  label="Resume Link"
+                  value={formData.resumeUrl}
+                  onChange={handleChange}
+                  required
+                  icon={<Link2 className="w-4 h-4" />}
+                  placeholder="https://resume.com/yourname"
+                />
               </div>
             </div>
 
@@ -259,79 +238,44 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
                 Cover Letter
               </h3>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="coverLetter" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    Why are you a great fit? <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    {isCoverLetterValid ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-500" />
-                    )}
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                      isCoverLetterValid 
-                        ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' 
-                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                    }`}>
-                      {formData.coverLetter.length} / {MIN_COVER_LETTER_LENGTH}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-300 ${
-                      isCoverLetterValid 
-                        ? 'bg-gradient-to-r from-green-500 to-green-600' 
-                        : 'bg-gradient-to-r from-amber-500 to-amber-600'
-                    }`}
-                    style={{ width: `${coverLetterProgress}%` }}
-                  />
-                </div>
-
-                <textarea
-                  id="coverLetter"
-                  name="coverLetter"
-                  value={formData.coverLetter}
-                  onChange={handleChange}
-                  required
-                  rows={10}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all resize-none"
-                  placeholder="Share your experience, skills, and why you're interested in this role. Tell us what makes you the perfect candidate..."
-                />
-              </div>
+              <Textarea
+                id="coverLetter"
+                name="coverLetter"
+                label="Why are you a great fit?"
+                value={formData.coverLetter}
+                onChange={handleChange}
+                required
+                rows={10}
+                icon={<FileText className="w-4 h-4" />}
+                placeholder="Share your experience, skills, and why you're interested in this role. Tell us what makes you the perfect candidate..."
+                showCount
+                maxCount={MIN_COVER_LETTER_LENGTH}
+              />
             </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col-reverse sm:flex-row gap-4 pt-6 border-t border-border">
-              <Link
-                href={`/jobs/${job.id}`}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold text-foreground bg-secondary hover:bg-secondary/80 border border-border rounded-xl transition-all duration-200 hover:scale-[1.02]"
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="flex-1"
+                onClick={() => router.push(`/jobs/${job.id}`)}
               >
                 <ArrowLeft className="w-4 h-4" />
                 Cancel
-              </Link>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
+                size="lg"
+                className="flex-[2]"
+                isLoading={isPending}
                 disabled={isPending || !isCoverLetterValid}
-                className="flex-[2] inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold text-primary-foreground bg-gradient-to-r from-primary to-primary/90 hover:shadow-xl hover:shadow-primary/25 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:shadow-none rounded-xl shadow-lg transition-all duration-200 hover:scale-[1.02] disabled:hover:scale-100"
               >
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Submitting Application...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    Submit Application
-                  </>
-                )}
-              </button>
+                <Send className="w-5 h-5" />
+                {isPending ? 'Submitting Application...' : 'Submit Application'}
+              </Button>
             </div>
           </form>
         </div>
