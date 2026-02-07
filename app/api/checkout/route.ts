@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+// Initialize Supabase Admin with Service Role Key
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Updated to match the 2026 Clover SDK version
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: "2026-01-28.clover",
 });
 
 export async function POST(request: NextRequest) {
@@ -19,13 +21,10 @@ export async function POST(request: NextRequest) {
     console.log("📦 Checkout request for application:", applicationId);
 
     if (!applicationId) {
-      return NextResponse.json(
-        { error: "Application ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Application ID is required" }, { status: 400 });
     }
 
-    // Verify the application exists
+    // 1. Verify the application exists
     const { data: application, error: appError } = await supabaseAdmin
       .from("job_applications")
       .select("*")
@@ -33,26 +32,21 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (appError || !application) {
-      console.error("Application not found:", appError);
-      return NextResponse.json(
-        { error: "Application not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Application not found" }, { status: 404 });
     }
 
     if (application.is_paid) {
-      return NextResponse.json(
-        { error: "This application has already been paid for" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Already paid for" }, { status: 400 });
     }
 
     const origin = request.headers.get("origin") || "http://localhost:3000";
 
-    // Create Stripe checkout session
+    // 2. Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
+      // Use the email from the application if it exists to pre-fill Stripe
+      customer_email: application.user_email || undefined,
       line_items: [
         {
           price_data: {
@@ -75,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ Stripe session created:", session.id);
 
-    // Save session ID
+    // 3. Update the application with the session ID
     await supabaseAdmin
       .from("job_applications")
       .update({
@@ -84,7 +78,7 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", applicationId);
 
-    // Create payment record
+    // 4. Create payment record (linking to your Section 8 table)
     await supabaseAdmin
       .from("payments")
       .insert({
@@ -93,12 +87,13 @@ export async function POST(request: NextRequest) {
         amount: 300,
         currency: "usd",
         status: "pending",
+        customer_email: application.user_email || null, // Tracking email here too
         created_at: new Date().toISOString(),
       });
 
     return NextResponse.json({
       success: true,
-      url: session.url,
+      url: session.url, // This is the link the frontend redirects to
     });
 
   } catch (error: any) {
