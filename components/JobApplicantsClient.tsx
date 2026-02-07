@@ -4,6 +4,21 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/client';
 import { toast } from 'sonner';
+import {
+  ArrowLeft,
+  Users,
+  Mail,
+  Phone,
+  FileText,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Briefcase,
+  Calendar,
+} from 'lucide-react';
+import { Button } from '@/components/button-saas';
+import { Card, CardContent } from '@/components/card-saas';
 
 interface Applicant {
   id: string;
@@ -22,6 +37,65 @@ interface JobApplicantsClientProps {
   jobTitle: string;
 }
 
+const getStatusConfig = (status: string) => {
+  const configs: Record<string, any> = {
+    accepted: {
+      bg: 'bg-green-500/10',
+      text: 'text-green-600 dark:text-green-400',
+      border: 'border-green-500/20',
+      icon: <CheckCircle2 className="w-4 h-4" />,
+    },
+    rejected: {
+      bg: 'bg-red-500/10',
+      text: 'text-red-600 dark:text-red-400',
+      border: 'border-red-500/20',
+      icon: <XCircle className="w-4 h-4" />,
+    },
+    pending: {
+      bg: 'bg-blue-500/10',
+      text: 'text-blue-600 dark:text-blue-400',
+      border: 'border-blue-500/20',
+      icon: <Clock className="w-4 h-4" />,
+    },
+    interviewing: {
+      bg: 'bg-purple-500/10',
+      text: 'text-purple-600 dark:text-purple-400',
+      border: 'border-purple-500/20',
+      icon: <Briefcase className="w-4 h-4" />,
+    },
+  };
+  return configs[status] || configs.pending;
+};
+
+const StatsCard = ({ label, count, icon, active }: {
+  label: string;
+  count: number;
+  icon: React.ReactNode;
+  active: boolean;
+}) => (
+  <Card className={`cursor-pointer transition-all duration-200 ${
+    active 
+      ? 'bg-primary/10 border-primary shadow-lg' 
+      : 'bg-card border-border hover:shadow-md'
+  }`}>
+    <CardContent className="pt-4 pb-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className={`text-sm font-medium ${active ? 'text-primary' : 'text-muted-foreground'}`}>
+            {label}
+          </p>
+          <p className={`text-2xl font-bold ${active ? 'text-primary' : 'text-foreground'}`}>
+            {count}
+          </p>
+        </div>
+        <div className={`p-2 rounded-lg ${active ? 'bg-primary/20' : 'bg-secondary'}`}>
+          {icon}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 export default function JobApplicantsClient({ jobId, jobTitle }: JobApplicantsClientProps) {
   const supabase = createClient();
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -32,7 +106,6 @@ export default function JobApplicantsClient({ jobId, jobTitle }: JobApplicantsCl
   useEffect(() => {
     fetchApplicants();
     
-    // Set up real-time subscription
     const channel = supabase
       .channel('applications_changes')
       .on(
@@ -96,198 +169,261 @@ export default function JobApplicantsClient({ jobId, jobTitle }: JobApplicantsCl
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'accepted': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    }
-  };
-
   const filteredApplicants = applicants.filter(app => 
     filter === 'all' ? true : app.status === filter
   );
 
+  const stats = {
+    all: applicants.length,
+    pending: applicants.filter(a => a.status === 'pending').length,
+    accepted: applicants.filter(a => a.status === 'accepted').length,
+    rejected: applicants.filter(a => a.status === 'rejected').length,
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-heading font-medium">Loading applicants...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-foreground font-medium">Loading applicants...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 pt-24 pb-4">
-      <div className="mb-6">
-        <Link href="/dashboard" className="text-primary-600 hover:underline text-sm mb-2 inline-block">
-          ← Back to Dashboard
-        </Link>
-        <h1 className="text-3xl font-bold text-heading dark:text-white">
-          Applicants for {jobTitle}
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          {applicants.length} total applications
-        </p>
-      </div>
-
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'all' 
-              ? 'bg-primary-600 text-white' 
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          All ({applicants.length})
-        </button>
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'pending'
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Pending ({applicants.filter(a => a.status === 'pending').length})
-        </button>
-        <button
-          onClick={() => setFilter('accepted')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'accepted'
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Accepted ({applicants.filter(a => a.status === 'accepted').length})
-        </button>
-        <button
-          onClick={() => setFilter('rejected')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filter === 'rejected'
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          Rejected ({applicants.filter(a => a.status === 'rejected').length})
-        </button>
-      </div>
-
-      {filteredApplicants.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">No applicants found</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 py-8 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <Link 
+            href="/dashboard" 
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4 group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Dashboard
+          </Link>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            Applicants for {jobTitle}
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            {applicants.length} total applications
+          </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-3">
-            {filteredApplicants.map((applicant) => (
-              <button
-                key={applicant.id}
-                onClick={() => setSelectedApplicant(applicant)}
-                className={`w-full text-left p-4 rounded-lg border transition-all ${
-                  selectedApplicant?.id === applicant.id
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-300'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-heading dark:text-white">
-                    {applicant.full_name}
-                  </h3>
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(applicant.status)}`}>
-                    {applicant.status}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{applicant.email}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  Applied {new Date(applicant.created_at).toLocaleDateString()}
-                </p>
-              </button>
-            ))}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div onClick={() => setFilter('all')}>
+            <StatsCard
+              label="All"
+              count={stats.all}
+              icon={<Users className="w-5 h-5 text-primary" />}
+              active={filter === 'all'}
+            />
           </div>
+          <div onClick={() => setFilter('pending')}>
+            <StatsCard
+              label="Pending"
+              count={stats.pending}
+              icon={<Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+              active={filter === 'pending'}
+            />
+          </div>
+          <div onClick={() => setFilter('accepted')}>
+            <StatsCard
+              label="Accepted"
+              count={stats.accepted}
+              icon={<CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />}
+              active={filter === 'accepted'}
+            />
+          </div>
+          <div onClick={() => setFilter('rejected')}>
+            <StatsCard
+              label="Rejected"
+              count={stats.rejected}
+              icon={<XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
+              active={filter === 'rejected'}
+            />
+          </div>
+        </div>
 
-          <div className="lg:col-span-2">
-            {selectedApplicant ? (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-heading dark:text-white mb-1">
-                      {selectedApplicant.full_name}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400">{selectedApplicant.email}</p>
-                    <p className="text-gray-600 dark:text-gray-400">{selectedApplicant.phone}</p>
-                  </div>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(selectedApplicant.status)}`}>
-                    {selectedApplicant.status}
-                  </span>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-bold text-heading dark:text-white mb-2 uppercase tracking-wide">
-                      Resume
-                    </h3>
-                    <a
-                      href={selectedApplicant.resume_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-primary-600 hover:underline"
-                    >
-                      View Resume →
-                    </a>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-heading dark:text-white mb-2 uppercase tracking-wide">
-                      Cover Letter
-                    </h3>
-                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {selectedApplicant.cover_letter}
+        {filteredApplicants.length === 0 ? (
+          <Card className="bg-card border-border">
+            <CardContent className="py-16 text-center">
+              <div className="mx-auto w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                <Users className="w-10 h-10 text-primary/60" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No applicants found
+              </h3>
+              <p className="text-muted-foreground">
+                {filter === 'all' ? 'No applications yet' : `No ${filter} applications`}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Applicants List */}
+            <div className="lg:col-span-1 space-y-3">
+              {filteredApplicants.map((applicant) => {
+                const config = getStatusConfig(applicant.status);
+                return (
+                  <Card
+                    key={applicant.id}
+                    className={`cursor-pointer transition-all duration-200 ${
+                      selectedApplicant?.id === applicant.id
+                        ? 'border-primary bg-primary/5 shadow-lg'
+                        : 'bg-card border-border hover:shadow-md'
+                    }`}
+                    onClick={() => setSelectedApplicant(applicant)}
+                  >
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-bold text-foreground">
+                          {applicant.full_name}
+                        </h3>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full ${config.bg} ${config.text} ${config.border} border`}>
+                          {config.icon}
+                          {applicant.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-1 truncate">{applicant.email}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(applicant.created_at).toLocaleDateString()}
                       </p>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
 
-                  <div>
-                    <h3 className="text-sm font-bold text-heading dark:text-white mb-3 uppercase tracking-wide">
-                      Update Status
-                    </h3>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => updateStatus(selectedApplicant.id, 'accepted')}
-                        disabled={selectedApplicant.status === 'accepted'}
-                        className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => updateStatus(selectedApplicant.id, 'pending')}
-                        disabled={selectedApplicant.status === 'pending'}
-                        className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Pending
-                      </button>
-                      <button
-                        onClick={() => updateStatus(selectedApplicant.id, 'rejected')}
-                        disabled={selectedApplicant.status === 'rejected'}
-                        className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Reject
-                      </button>
+            {/* Applicant Details */}
+            <div className="lg:col-span-2">
+              {selectedApplicant ? (
+                <Card className="bg-card border-border">
+                  <CardContent className="pt-8 pb-8">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-8 pb-6 border-b border-border">
+                      <div>
+                        <h2 className="text-3xl font-bold text-foreground mb-2">
+                          {selectedApplicant.full_name}
+                        </h2>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Mail className="w-4 h-4" />
+                            <a href={`mailto:${selectedApplicant.email}`} className="hover:text-primary transition-colors">
+                              {selectedApplicant.email}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Phone className="w-4 h-4" />
+                            <a href={`tel:${selectedApplicant.phone}`} className="hover:text-primary transition-colors">
+                              {selectedApplicant.phone}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      {(() => {
+                        const config = getStatusConfig(selectedApplicant.status);
+                        return (
+                          <span className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl ${config.bg} ${config.text} ${config.border} border`}>
+                            {config.icon}
+                            {selectedApplicant.status}
+                          </span>
+                        );
+                      })()}
                     </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-gray-50 dark:bg-gray-900 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl p-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400">
-                  Select an applicant to view details
-                </p>
-              </div>
-            )}
+
+                    <div className="space-y-8">
+                      {/* Resume */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="w-5 h-5 text-primary" />
+                          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                            Resume
+                          </h3>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="md"
+                          onClick={() => window.open(selectedApplicant.resume_url, '_blank')}
+                        >
+                          View Resume
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      {/* Cover Letter */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="w-5 h-5 text-primary" />
+                          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                            Cover Letter
+                          </h3>
+                        </div>
+                        <div className="bg-secondary/30 rounded-xl p-6 border border-border">
+                          <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                            {selectedApplicant.cover_letter}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Status Update Actions */}
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-4">
+                          Update Status
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <Button
+                            variant="success"
+                            size="lg"
+                            onClick={() => updateStatus(selectedApplicant.id, 'accepted')}
+                            disabled={selectedApplicant.status === 'accepted'}
+                            className="w-full"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Accept
+                          </Button>
+                          <Button
+                            variant="primary"
+                            size="lg"
+                            onClick={() => updateStatus(selectedApplicant.id, 'pending')}
+                            disabled={selectedApplicant.status === 'pending'}
+                            className="w-full"
+                          >
+                            <Clock className="w-4 h-4" />
+                            Pending
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="lg"
+                            onClick={() => updateStatus(selectedApplicant.id, 'rejected')}
+                            disabled={selectedApplicant.status === 'rejected'}
+                            className="w-full"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="bg-card border-border border-dashed">
+                  <CardContent className="py-16 text-center">
+                    <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      Select an applicant to view details
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
