@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Search,
   Filter,
@@ -13,8 +13,14 @@ import {
   ExternalLink,
   Sparkles,
   Briefcase,
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/card-saas';
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Eye,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/card-saas";
+import { Input } from "@/components/input-saas";
+import { Button } from "@/components/button-saas";
 
 interface Application {
   id: string;
@@ -38,28 +44,65 @@ interface MyApplicationsClientProps {
 
 const getStatusConfig = (status: string) => {
   const configs: Record<string, any> = {
-    accepted: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
-    rejected: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20' },
-    interviewing: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
-    shortlisted: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
-    viewed: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
-    pending: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
+    accepted: {
+      bg: "bg-green-500/10",
+      text: "text-green-600 dark:text-green-400",
+      border: "border-green-500/20",
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    },
+    rejected: {
+      bg: "bg-red-500/10",
+      text: "text-red-600 dark:text-red-400",
+      border: "border-red-500/20",
+      icon: <XCircle className="w-3.5 h-3.5" />,
+    },
+    interviewing: {
+      bg: "bg-purple-500/10",
+      text: "text-purple-600 dark:text-purple-400",
+      border: "border-purple-500/20",
+      icon: <Briefcase className="w-3.5 h-3.5" />,
+    },
+    shortlisted: {
+      bg: "bg-blue-500/10",
+      text: "text-blue-600 dark:text-blue-400",
+      border: "border-blue-500/20",
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    },
+    viewed: {
+      bg: "bg-primary/10",
+      text: "text-primary",
+      border: "border-primary/20",
+      icon: <Eye className="w-3.5 h-3.5" />,
+    },
+    pending: {
+      bg: "bg-amber-500/10",
+      text: "text-amber-600 dark:text-amber-400",
+      border: "border-amber-500/20",
+      icon: <Clock className="w-3.5 h-3.5" />,
+    },
   };
 
-  return configs[status?.toLowerCase() as keyof typeof configs] || {
-    bg: 'bg-secondary',
-    text: 'text-muted-foreground',
-    border: 'border-border',
-  };
+  return (
+    configs[status?.toLowerCase() as keyof typeof configs] || {
+      bg: "bg-secondary",
+      text: "text-muted-foreground",
+      border: "border-border",
+      icon: <Clock className="w-3.5 h-3.5" />,
+    }
+  );
 };
 
 const calculateStats = (applications: Application[]) => {
   const totalApplications = applications.length;
-  const interviewingCount = applications.filter((a) => a.status === 'interviewing').length;
+  const interviewingCount = applications.filter(
+    (a) => a.status === "interviewing",
+  ).length;
   const responseRate =
     totalApplications > 0
       ? Math.round(
-          (applications.filter((a) => a.status !== 'pending').length / totalApplications) * 100
+          (applications.filter((a) => a.status !== "pending").length /
+            totalApplications) *
+            100,
         )
       : 0;
 
@@ -78,7 +121,9 @@ const StatsCard = ({
   bgColor: string;
 }) => (
   <Card className="bg-card border-border group hover:shadow-lg transition-all duration-300 overflow-hidden relative">
-    <div className={`absolute top-0 right-0 w-32 h-32 ${bgColor} rounded-full blur-3xl group-hover:opacity-100 transition-opacity duration-500 opacity-50`} />
+    <div
+      className={`absolute top-0 right-0 w-32 h-32 ${bgColor} rounded-full blur-3xl group-hover:opacity-100 transition-opacity duration-500 opacity-50`}
+    />
     <CardContent className="pt-6 pb-6 relative z-10">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
@@ -93,7 +138,13 @@ const StatsCard = ({
   </Card>
 );
 
-const ApplicationCard = ({ application, index }: { application: Application; index: number }) => {
+const ApplicationCard = ({
+  application,
+  index,
+}: {
+  application: Application;
+  index: number;
+}) => {
   const statusConfig = getStatusConfig(application.status);
 
   return (
@@ -102,7 +153,7 @@ const ApplicationCard = ({ application, index }: { application: Application; ind
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <CardContent className="pt-6 pb-6 sm:pt-8 sm:pb-8">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
           <div className="flex-1 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-2xl font-bold text-foreground">
@@ -111,6 +162,7 @@ const ApplicationCard = ({ application, index }: { application: Application; ind
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full uppercase border ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}
               >
+                {statusConfig.icon}
                 {application.status}
               </span>
             </div>
@@ -142,41 +194,49 @@ const ApplicationCard = ({ application, index }: { application: Application; ind
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="w-4 h-4" />
-              Applied{' '}
-              {new Date(application.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
+              Applied{" "}
+              {new Date(application.created_at).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </div>
           </div>
 
-          <Link
-            href={`/jobs/${application.job_id}`}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-secondary hover:bg-secondary/80 text-foreground border border-border rounded-xl font-semibold transition-all duration-200 hover:scale-105 whitespace-nowrap"
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() =>
+              (window.location.href = `/jobs/${application.job_id}`)
+            }
           >
             View Job
             <ExternalLink className="w-4 h-4" />
-          </Link>
+          </Button>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export default function MyApplicationsClient({ applications }: MyApplicationsClientProps) {
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+export default function MyApplicationsClient({
+  applications,
+}: MyApplicationsClientProps) {
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredApplications = applications.filter((app) => {
-    const matchesSearch =
-      app.jobs.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.jobs.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      const matchesSearch =
+        app.jobs.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.jobs.company.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "all" || app.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [applications, searchTerm, filterStatus]);
 
-  const stats = calculateStats(applications);
+  const stats = useMemo(() => calculateStats(applications), [applications]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 py-8 sm:py-12">
@@ -192,13 +252,15 @@ export default function MyApplicationsClient({ applications }: MyApplicationsCli
                 Track the status of your job applications
               </p>
             </div>
-            <Link
-              href="/jobs"
-              className="group inline-flex items-center justify-center gap-2 px-6 py-3 text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => (window.location.href = "/jobs")}
+              className="group"
             >
               <Search className="w-5 h-5 group-hover:rotate-12 transition-transform" />
               Browse Jobs
-            </Link>
+            </Button>
           </div>
 
           {/* Stats Cards */}
@@ -227,27 +289,18 @@ export default function MyApplicationsClient({ applications }: MyApplicationsCli
           <Card className="bg-card border-border shadow-lg">
             <CardContent className="pt-6 pb-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="search"
-                    className="block text-sm font-semibold text-foreground flex items-center gap-2"
-                  >
-                    <Search className="w-4 h-4 text-muted-foreground" />
-                    Search Applications
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="search"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search by job title or company..."
-                      className="w-full px-4 py-3 pl-11 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                    />
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  </div>
-                </div>
+                {/* Search Input */}
+                <Input
+                  type="text"
+                  id="search"
+                  label="Search Applications"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by job title or company..."
+                  icon={<Search className="w-4 h-4" />}
+                />
 
+                {/* Status Filter */}
                 <div className="space-y-2">
                   <label
                     htmlFor="status"
@@ -256,27 +309,35 @@ export default function MyApplicationsClient({ applications }: MyApplicationsCli
                     <Filter className="w-4 h-4 text-muted-foreground" />
                     Filter by Status
                   </label>
-                  <select
-                    id="status"
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="viewed">Viewed</option>
-                    <option value="shortlisted">Shortlisted</option>
-                    <option value="interviewing">Interviewing</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-input px-3 py-3">
+                    <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <select
+                      id="status"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full bg-transparent outline-none border-none text-foreground appearance-none cursor-pointer"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="pending">Pending</option>
+                      <option value="viewed">Viewed</option>
+                      <option value="shortlisted">Shortlisted</option>
+                      <option value="interviewing">Interviewing</option>
+                      <option value="accepted">Accepted</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <div className="mt-6 pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-bold text-foreground">{filteredApplications.length}</span> of{' '}
-                  <span className="font-semibold">{applications.length}</span> applications
+                  Showing{" "}
+                  <span className="font-bold text-foreground">
+                    {filteredApplications.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">{applications.length}</span>{" "}
+                  applications
                 </p>
               </div>
             </CardContent>
@@ -295,17 +356,18 @@ export default function MyApplicationsClient({ applications }: MyApplicationsCli
               </h3>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 {searchTerm
-                  ? 'Try adjusting your search or filter criteria'
-                  : 'Start applying to jobs to see them here'}
+                  ? "Try adjusting your search or filter criteria"
+                  : "Start applying to jobs to see them here"}
               </p>
               {!searchTerm && (
-                <Link
-                  href="/jobs"
-                  className="inline-flex items-center gap-2 px-6 py-3 text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => (window.location.href = "/jobs")}
                 >
                   <Search className="w-5 h-5" />
                   Browse Jobs
-                </Link>
+                </Button>
               )}
             </CardContent>
           </Card>
