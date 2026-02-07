@@ -5,12 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/actions/auth";
 import { toast } from "sonner";
+import { ArrowRight, Mail, Lock, Sparkles } from "lucide-react";
+import { Input } from "@/components/input-saas";
 
 export default function LoginPage() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
     startTransition(async () => {
       const result = await login(formData);
 
@@ -20,13 +25,8 @@ export default function LoginPage() {
       }
 
       if (result?.success) {
-        // Wait a tiny bit for the auth state to propagate
         await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Show success toast
         toast.success("Login successful! Redirecting...");
-
-        // Redirect to dashboard
         router.push("/dashboard");
         router.refresh();
       }
@@ -34,137 +34,179 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col justify-center py-12">
-      <div className="flex flex-col items-center justify-center px-6 mx-auto w-full lg:py-0">
-        {/* Branding */}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md">
+        {/* Logo/Branding */}
         <Link
           href="/"
-          className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
+          className="flex items-center justify-center gap-2 mb-8 group"
         >
-          <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
-            <span className="text-xl font-bold text-white">J</span>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+            <span className="text-2xl font-bold text-primary-foreground">J</span>
           </div>
-          Job<span className="text-primary-600">Board</span>
+          <span className="text-2xl font-bold text-foreground">
+            Job<span className="text-primary">Board</span>
+          </span>
         </Link>
 
-        <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
-              Sign in to your account
+        {/* Main Card */}
+        <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-sm">
+          {/* Card Header */}
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-b border-border p-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Welcome Back
             </h1>
+            <p className="text-muted-foreground">
+              Sign in to continue your job search journey
+            </p>
+          </div>
 
-            {/* Social Logins */}
+          {/* Card Content */}
+          <div className="p-8 space-y-6">
+            {/* Social Login Buttons */}
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                className="flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 border border-border rounded-lg bg-background hover:bg-secondary/50 text-foreground font-medium transition-all duration-200 hover:shadow-md group"
               >
                 <img
-                  className="w-5 h-5 mr-2"
+                  className="w-5 h-5"
                   src="https://www.svgrepo.com/show/475656/google-color.svg"
-                  alt="google"
+                  alt="Google"
                 />
-                <span className="text-sm font-medium">Google</span>
+                <span className="text-sm">Google</span>
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 border border-border rounded-lg bg-background hover:bg-secondary/50 text-foreground font-medium transition-all duration-200 hover:shadow-md group"
               >
                 <img
-                  className="w-5 h-5 mr-2 dark:invert"
+                  className="w-5 h-5 dark:invert"
                   src="https://www.svgrepo.com/show/511330/apple-fill.svg"
-                  alt="apple"
+                  alt="Apple"
                 />
-                <span className="text-sm font-medium">Apple</span>
+                <span className="text-sm">Apple</span>
               </button>
             </div>
 
-            <div className="flex items-center my-4">
-              <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-              <span className="px-3 text-xs text-gray-500 uppercase">
-                Or email login
-              </span>
-              <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-4 text-muted-foreground font-medium">
+                  Or continue with email
+                </span>
+              </div>
             </div>
 
-            {/* Form Action tied to the Server Action */}
-            <form className="space-y-4 md:space-y-6" action={handleSubmit}>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Your email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  placeholder="name@company.com"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  placeholder="••••••••"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  required
-                />
-              </div>
+            {/* Login Form */}
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              {/* Email Input */}
+              <Input
+                type="email"
+                name="email"
+                id="email"
+                label="Email Address"
+                placeholder="you@example.com"
+                icon={<Mail className="h-5 w-5" />}
+                autoComplete="email"
+                required
+              />
 
+              {/* Password Input */}
+              <Input
+                type="password"
+                name="password"
+                id="password"
+                label="Password"
+                placeholder="••••••••"
+                icon={<Lock className="h-5 w-5" />}
+                autoComplete="current-password"
+                required
+              />
+
+              {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
                     id="remember"
+                    name="remember"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
                   />
                   <label
                     htmlFor="remember"
-                    className="ml-2 text-sm text-gray-500 dark:text-gray-300 cursor-pointer"
+                    className="ml-2 block text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
                   >
                     Remember me
                   </label>
                 </div>
-                <a
-                  href="#"
-                  className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {isPending ? "Signing in..." : "Sign In"}
+                {isPending ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
-
-              <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
-                Don't have an account yet?{" "}
-                <Link
-                  href="/register"
-                  className="font-medium text-primary-600 hover:underline dark:text-primary-500"
-                >
-                  Sign up
-                </Link>
-              </p>
             </form>
+          </div>
+
+          {/* Card Footer */}
+          <div className="bg-secondary/30 border-t border-border px-8 py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link
+                href="/register"
+                className="font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                Sign up for free
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Trust Indicators */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-muted-foreground mb-4">
+            Trusted by 10,000+ job seekers worldwide
+          </p>
+          <div className="flex items-center justify-center gap-6 opacity-60">
+            <div className="text-xs text-muted-foreground">🔒 Secure Login</div>
+            <div className="text-xs text-muted-foreground">⚡ Instant Access</div>
+            <div className="text-xs text-muted-foreground">🎯 AI-Powered</div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
