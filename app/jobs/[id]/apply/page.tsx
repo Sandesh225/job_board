@@ -3,49 +3,48 @@ import { redirect, notFound } from "next/navigation";
 import ApplyJobClient from "@/components/ApplyJobClient";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-/**
- * Job application page
- * Only job-seekers allowed
- */
 export default async function ApplyJobPage({ params }: PageProps) {
-  const { id } = params;
+  // 1. Await the params (Next.js 15 requirement)
+  const { id } = await params;
   const supabase = await createClient();
 
+  // 2. Check Auth
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) {
+    console.log("Redirecting: No user found");
     redirect("/login");
   }
 
-  // Get role from profiles table
+  // 3. Check Role
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  // Enforce job-seeker role
   if (profile?.role !== "job-seeker") {
+    console.log(`Redirecting: User role is ${profile?.role}, not job-seeker`);
     redirect(`/jobs/${id}`);
   }
 
-  // Fetch job data
-  const { data: job, error } = await supabase
+  // 4. Fetch Job
+  const { data: job, error: jobError } = await supabase
     .from("jobs")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (error || !job) {
+  if (jobError || !job) {
+    console.log("Error: Job not found");
     notFound();
   }
 
-  // Prevent duplicate applications
+  // 5. Prevent Duplicate Applications
   const { data: existingApplication } = await supabase
     .from("applications")
     .select("id")
@@ -54,8 +53,10 @@ export default async function ApplyJobPage({ params }: PageProps) {
     .maybeSingle();
 
   if (existingApplication) {
+    console.log("Redirecting: Application already exists");
     redirect(`/jobs/${id}`);
   }
 
+  // 6. If all checks pass, render the client form
   return <ApplyJobClient job={job} user={user} />;
 }
