@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
+import React, { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import {
   Briefcase,
   CheckCircle2,
@@ -9,16 +9,16 @@ import {
   Plus,
   Eye,
   Edit,
-  TrendingUp,
   Calendar,
   MapPin,
   Search,
   Filter,
-  FileText,
   DollarSign,
   Sparkles,
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/card-saas';
+} from "lucide-react";
+import { Card, CardContent } from "@/components/card-saas";
+import { Input } from "@/components/input-saas";
+import { Button } from "@/components/button-saas";
 
 interface Job {
   id: string;
@@ -37,13 +37,13 @@ interface MyJobsClientProps {
   jobs: Job[];
 }
 
-type FilterStatus = 'all' | 'active' | 'inactive';
+type FilterStatus = "all" | "active" | "inactive";
 
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -66,14 +66,18 @@ const StatsCard = ({
 }) => {
   return (
     <Card className="bg-card border-border group hover:shadow-lg transition-all duration-300 overflow-hidden relative">
-      <div className={`absolute top-0 right-0 w-32 h-32 ${bgColor} rounded-full blur-3xl group-hover:opacity-100 transition-opacity duration-500 opacity-50`} />
+      <div
+        className={`absolute top-0 right-0 w-32 h-32 ${bgColor} rounded-full blur-3xl group-hover:opacity-100 transition-opacity duration-500 opacity-50`}
+      />
       <CardContent className="pt-6 pb-6 relative z-10">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-3xl font-bold text-foreground">{value}</p>
           </div>
-          <div className={`h-14 w-14 rounded-xl ${iconBg} flex items-center justify-center ring-4 ring-primary/5 group-hover:ring-primary/10 transition-all`}>
+          <div
+            className={`h-14 w-14 rounded-xl ${iconBg} flex items-center justify-center ring-4 ring-primary/5 group-hover:ring-primary/10 transition-all`}
+          >
             {Icon}
           </div>
         </div>
@@ -101,26 +105,15 @@ const SearchFilters = ({
     <Card className="bg-card border-border shadow-lg">
       <CardContent className="pt-6 pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label
-              htmlFor="search"
-              className="block text-sm font-semibold text-foreground flex items-center gap-2"
-            >
-              <Search className="w-4 h-4 text-muted-foreground" />
-              Search Jobs
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                id="search"
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search by title or company..."
-                className="w-full px-4 py-3 pl-11 rounded-xl border border-border bg-background/50 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-              />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            </div>
-          </div>
+          <Input
+            type="text"
+            id="search"
+            label="Search Jobs"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search by title or company..."
+            icon={<Search className="w-4 h-4" />}
+          />
 
           <div className="space-y-2">
             <label
@@ -130,23 +123,27 @@ const SearchFilters = ({
               <Filter className="w-4 h-4 text-muted-foreground" />
               Filter by Status
             </label>
-            <select
-              id="status"
-              value={filterStatus}
-              onChange={(e) => onFilterChange(e.target.value as FilterStatus)}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all appearance-none cursor-pointer"
-            >
-              <option value="all">All Jobs</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </select>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-input px-3 py-3">
+              <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <select
+                id="status"
+                value={filterStatus}
+                onChange={(e) => onFilterChange(e.target.value as FilterStatus)}
+                className="w-full bg-transparent outline-none border-none text-foreground appearance-none cursor-pointer"
+              >
+                <option value="all">All Jobs</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div className="mt-6 pt-6 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-bold text-foreground">{filteredCount}</span> of{' '}
-            <span className="font-semibold">{totalCount}</span> jobs
+            Showing{" "}
+            <span className="font-bold text-foreground">{filteredCount}</span>{" "}
+            of <span className="font-semibold">{totalCount}</span> jobs
           </p>
         </div>
       </CardContent>
@@ -214,27 +211,31 @@ const JobCard = ({ job, index }: { job: Job; index: number }) => {
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                <span className="font-semibold text-foreground">{applicationCount}</span>
-                <span>Application{applicationCount !== 1 ? 's' : ''}</span>
+                <span className="font-semibold text-foreground">
+                  {applicationCount}
+                </span>
+                <span>Application{applicationCount !== 1 ? "s" : ""}</span>
               </div>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <Link
-              href={`/jobs/${job.id}`}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-secondary hover:bg-secondary/80 text-foreground border border-border rounded-xl font-semibold transition-all duration-200 hover:scale-105 whitespace-nowrap"
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => (window.location.href = `/jobs/${job.id}`)}
             >
               <Eye className="w-4 h-4" />
               View
-            </Link>
-            <Link
-              href={`/jobs/${job.id}/edit`}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl whitespace-nowrap"
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => (window.location.href = `/jobs/${job.id}/edit`)}
             >
               <Edit className="w-4 h-4" />
               Edit
-            </Link>
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -258,17 +259,18 @@ const EmptyState = ({ hasSearch }: { hasSearch: boolean }) => {
         </h3>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           {hasSearch
-            ? 'Try adjusting your search or filter criteria'
-            : 'Get started by posting your first job listing'}
+            ? "Try adjusting your search or filter criteria"
+            : "Get started by posting your first job listing"}
         </p>
         {!hasSearch && (
-          <Link
-            href="/jobs/post"
-            className="inline-flex items-center gap-2 px-6 py-3 text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => (window.location.href = "/jobs/post")}
           >
             <Plus className="w-5 h-5" />
             Post Your First Job
-          </Link>
+          </Button>
         )}
       </CardContent>
     </Card>
@@ -276,8 +278,8 @@ const EmptyState = ({ hasSearch }: { hasSearch: boolean }) => {
 };
 
 export default function MyJobsClient({ jobs }: MyJobsClientProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
@@ -286,9 +288,9 @@ export default function MyJobsClient({ jobs }: MyJobsClientProps) {
         job.company.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
-        filterStatus === 'all' ||
-        (filterStatus === 'active' && job.is_active) ||
-        (filterStatus === 'inactive' && !job.is_active);
+        filterStatus === "all" ||
+        (filterStatus === "active" && job.is_active) ||
+        (filterStatus === "inactive" && !job.is_active);
 
       return matchesSearch && matchesStatus;
     });
@@ -298,7 +300,7 @@ export default function MyJobsClient({ jobs }: MyJobsClientProps) {
     const activeJobs = jobs.filter((j) => j.is_active).length;
     const totalApplications = jobs.reduce(
       (sum, job) => sum + getApplicationCount(job),
-      0
+      0,
     );
 
     return {
@@ -330,13 +332,15 @@ export default function MyJobsClient({ jobs }: MyJobsClientProps) {
                 Manage and track your posted positions
               </p>
             </div>
-            <Link
-              href="/jobs/post"
-              className="group inline-flex items-center justify-center gap-2 px-6 py-3 text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => (window.location.href = "/jobs/post")}
+              className="group"
             >
               <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
               Post New Job
-            </Link>
+            </Button>
           </div>
 
           {/* Stats Cards */}
