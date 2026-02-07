@@ -1,20 +1,41 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { Linkedin, Twitter, Github } from "lucide-react";
+import { HiSun, HiMoon } from "react-icons/hi";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setIsDark(
+      window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches,
+    );
+  }, []);
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+    // Logic to toggle theme
+  };
+
+  if (!mounted) {
+    return <div className="p-2.5 w-10 h-10"></div>;
+  }
 
   return (
-    // Footer wrapper with border separation and dark mode support
-    <footer className="bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800">
-      <div className="mx-auto max-w-screen-xl px-4 py-12">
-        {/* ================= Top Section ================= */}
-        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
+    <footer className="bg-background border-t border-border dark:border-border mt-20">
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6">
+        {/* Top Section */}
+        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4 mb-8">
           {/* Brand & Description */}
           <div>
-            <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-              JobPortal™
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h3 className="h5 mb-3 text-foreground">JobBoard</h3>
+            <p className="text-sm text-muted-foreground">
               Connecting talented professionals with world-class companies. Find
               jobs, hire talent, and grow your career.
             </p>
@@ -22,114 +43,120 @@ export default function Footer() {
 
           {/* Jobs Links */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold uppercase text-gray-900 dark:text-white">
+            <h4 className="text-sm font-semibold uppercase text-foreground mb-3">
               Jobs
             </h4>
-            <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <ul className="space-y-2 text-sm">
               <li>
-                <a href="/jobs" className="hover:underline">
+                <Link
+                  href="/jobs"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Browse Jobs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/remote-jobs" className="hover:underline">
+                <Link
+                  href="/remote-jobs"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Remote Jobs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/companies" className="hover:underline">
+                <Link
+                  href="/companies"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Companies
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/post-job" className="hover:underline">
+                <Link
+                  href="/post-job"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Post a Job
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Company Links */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold uppercase text-gray-900 dark:text-white">
+            <h4 className="text-sm font-semibold uppercase text-foreground mb-3">
               Company
             </h4>
-            <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <ul className="space-y-2 text-sm">
               <li>
-                <a href="/about" className="hover:underline">
+                <Link
+                  href="/about"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/contact" className="hover:underline">
+                <Link
+                  href="/contact"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/careers" className="hover:underline">
+                <Link
+                  href="/careers"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Careers
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/blog" className="hover:underline">
+                <Link
+                  href="/blog"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Blog
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Legal Links */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold uppercase text-gray-900 dark:text-white">
+            <h4 className="text-sm font-semibold uppercase text-foreground mb-3">
               Legal
             </h4>
-            <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <ul className="space-y-2 text-sm">
               <li>
-                <a href="/privacy" className="hover:underline">
+                <Link
+                  href="/privacy"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms" className="hover:underline">
+                <Link
+                  href="/terms"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/cookies" className="hover:underline">
+                <Link
+                  href="/cookies"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Cookie Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
         </div>
-
-        {/* ================= Divider ================= */}
-        <hr className="my-8 border-gray-200 dark:border-gray-800" />
-
-        {/* ================= Bottom Section ================= */}
-        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          {/* Copyright */}
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            © {currentYear}{" "}
-            <a href="/" className="hover:underline font-medium">
-              JobPortal™
-            </a>
-            . All rights reserved.
-          </span>
-
-          {/* Social Links (Text-based, clean) */}
-          <div className="flex space-x-6 text-sm text-gray-500 dark:text-gray-400">
-            <a href="#" className="hover:text-primary-600">
-              LinkedIn
-            </a>
-            <a href="#" className="hover:text-primary-600">
-              Twitter
-            </a>
-            <a href="#" className="hover:text-primary-600">
-              GitHub
-            </a>
-          </div>
-        </div>
+        <hr className="border-border dark:border-border mb-8" />
       </div>
     </footer>
   );
