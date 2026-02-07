@@ -18,6 +18,7 @@
     "@supabase/supabase-js": "^2.90.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "flowbite": "^4.0.1",
     "flowbite-react": "^0.12.16",
     "install": "^0.13.0",
