@@ -1,25 +1,29 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { createClient } from '@/lib/client';
-import { 
-  ArrowLeft, 
-  Briefcase, 
-  MapPin, 
-  Mail, 
-  Phone, 
-  User, 
-  FileText, 
-  Link2, 
+import React, { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+import { createClient } from "@/lib/client"; // Assumes you have this setup
+import {
+  ArrowLeft,
+  Briefcase,
+  MapPin,
+  Mail,
+  Phone,
+  User,
+  FileText,
+  Link2,
   Send,
-  ChevronRight
-} from 'lucide-react';
-import { Input } from '@/components/input-saas';
-import { Textarea } from '@/ui/textarea'
-import { Button } from '@/components/button-saas';
+  ChevronRight,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface Job {
   id: string;
@@ -36,42 +40,95 @@ interface ApplyJobClientProps {
   user: any;
 }
 
+// ============================================================================
+// Internal UI Components (Replaces external dependencies)
+// ============================================================================
+
+const Label = ({
+  children,
+  required,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) => (
+  <label className="block text-sm font-medium text-foreground mb-1.5">
+    {children} {required && <span className="text-destructive">*</span>}
+  </label>
+);
+
+const InputField = ({
+  icon: Icon,
+  className,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { icon?: any }) => (
+  <div className="relative group">
+    {Icon && (
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary">
+        {Icon}
+      </div>
+    )}
+    <input
+      className={`flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ${Icon ? "pl-10" : ""} ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+const TextAreaField = ({
+  className,
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea
+    className={`flex min-h-[120px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ${className}`}
+    {...props}
+  />
+);
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
 export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
-  
+
+  // Form State
   const [formData, setFormData] = useState({
-    fullName: user.user_metadata?.full_name || '',
-    email: user.email || '',
-    phone: '',
-    coverLetter: '',
-    resumeUrl: '',
+    fullName: user.user_metadata?.full_name || "",
+    email: user.email || "",
+    phone: "",
+    coverLetter: "",
+    resumeUrl: "",
   });
 
   const MIN_COVER_LETTER_LENGTH = 100;
+  const currentLength = formData.coverLetter.length;
+  const isCoverLetterValid = currentLength >= MIN_COVER_LETTER_LENGTH;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Final validation check
-    if (formData.coverLetter.length < MIN_COVER_LETTER_LENGTH) {
-      toast.error(`Cover letter must be at least ${MIN_COVER_LETTER_LENGTH} characters.`);
+
+    if (!isCoverLetterValid) {
+      toast.error(
+        `Please write at least ${MIN_COVER_LETTER_LENGTH} characters.`,
+      );
       return;
     }
 
     startTransition(async () => {
-      const { error } = await supabase
-        .from('applications')
-        .insert({
+      try {
+        const { error } = await supabase.from("applications").insert({
           job_id: job.id,
           user_id: user.id,
-          status: 'pending',
+          status: "pending",
           full_name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
@@ -79,213 +136,217 @@ export default function ApplyJobClient({ job, user }: ApplyJobClientProps) {
           resume_url: formData.resumeUrl,
         });
 
-      if (error) {
-        // Postgres error code for unique violation (user already applied)
-        if (error.code === '23505') {
-          toast.error('You have already submitted an application for this position.');
+        if (error) {
+          if (error.code === "23505") {
+            toast.error("You have already applied for this position.");
+          } else {
+            console.error("Submission error:", error);
+            toast.error("Something went wrong. Please try again.");
+          }
         } else {
-          console.error('Submission error:', error);
-          toast.error('Something went wrong. Please try again later.');
+          toast.success("Application submitted successfully!");
+          // Small delay for UX before redirect
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          router.refresh();
+          router.push("/dashboard");
         }
-      } else {
-        toast.success('Application received! Redirecting...');
-        // Refresh the page/router to update server components elsewhere
-        router.refresh();
-        setTimeout(() => router.push('/dashboard'), 2000);
+      } catch (err) {
+        toast.error("An unexpected error occurred.");
       }
     });
   };
 
-  const isCoverLetterValid = formData.coverLetter.length >= MIN_COVER_LETTER_LENGTH;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 py-8 sm:py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Breadcrumb Navigation */}
-        <nav className="mb-6 flex items-center space-x-2 text-sm">
-          <Link 
-            href="/jobs" 
-            className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors group"
+    <div className="min-h-screen bg-background py-8 sm:py-12 animate-in fade-in duration-500">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* --- Breadcrumbs --- */}
+        <nav className="mb-8 flex items-center space-x-1 text-sm text-muted-foreground">
+          <Link
+            href="/jobs"
+            className="hover:text-primary transition-colors flex items-center gap-1"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Jobs
+            <ArrowLeft className="h-3.5 w-3.5" /> Jobs
           </Link>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          <Link 
-            href={`/jobs/${job.id}`} 
-            className="text-muted-foreground hover:text-primary transition-colors truncate max-w-[150px] sm:max-w-none"
+          <ChevronRight className="h-4 w-4" />
+          <Link
+            href={`/jobs/${job.id}`}
+            className="hover:text-primary transition-colors truncate max-w-[150px]"
           >
             {job.title}
           </Link>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4" />
           <span className="text-foreground font-medium">Apply</span>
         </nav>
 
-        {/* Job Header Card */}
-        <div className="relative bg-gradient-to-br from-card to-secondary/50 backdrop-blur-sm border border-border rounded-2xl shadow-lg p-6 sm:p-8 mb-8 overflow-hidden">
-          {/* Decorative background */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -z-10" />
-          
-          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-xs font-semibold text-primary">
-                <Briefcase className="w-3.5 h-3.5" />
-                Job Application
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+        {/* --- Header Card --- */}
+        <div className="relative mb-8 rounded-2xl border border-border bg-card p-6 shadow-sm overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {job.title}
               </h1>
-              <p className="text-lg text-muted-foreground font-medium">{job.company}</p>
+              <p className="text-muted-foreground font-medium flex items-center gap-2 mt-1">
+                <Briefcase className="h-4 w-4" /> {job.company}
+              </p>
             </div>
-            
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-xl text-sm font-semibold">
-                <Briefcase className="w-4 h-4" />
-                {job.job_type}
+            <div className="flex gap-2">
+              <span className="inline-flex items-center rounded-md bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                {job.job_type.replace("_", " ")}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-secondary border border-border rounded-xl text-sm font-semibold text-foreground">
-                <MapPin className="w-4 h-4" />
-                {job.location}
+              <span className="inline-flex items-center rounded-md bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                <MapPin className="mr-1 h-3 w-3" /> {job.location}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Application Form Card */}
-        <div className="bg-gradient-to-br from-card to-secondary/30 backdrop-blur-sm border border-border rounded-2xl shadow-xl overflow-hidden">
-          {/* Form Header */}
-          <div className="px-6 sm:px-8 py-5 border-b border-border bg-secondary/20">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
-                <User className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Candidate Information</h2>
-                <p className="text-sm text-muted-foreground">Complete all fields to submit your application</p>
-              </div>
+        {/* --- Application Form --- */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Section: Contact Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <User className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Contact Information</h2>
             </div>
-          </div>
 
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
-            {/* Personal Information Grid */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <div className="w-6 h-0.5 bg-primary rounded-full" />
-                Personal Details
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Full Name */}
-                <Input
-                  type="text"
-                  id="fullName"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Label required>Full Name</Label>
+                <InputField
                   name="fullName"
-                  label="Full Name"
+                  icon={<User className="h-4 w-4" />}
+                  placeholder="John Doe"
                   value={formData.fullName}
                   onChange={handleChange}
                   required
-                  icon={<User className="w-4 h-4" />}
-                  placeholder="Jane Doe"
                 />
+              </div>
 
-                {/* Email */}
-                <Input
+              <div>
+                <Label required>Email Address</Label>
+                <InputField
                   type="email"
-                  id="email"
                   name="email"
-                  label="Email Address"
+                  icon={<Mail className="h-4 w-4" />}
+                  placeholder="john@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  icon={<Mail className="w-4 h-4" />}
-                  placeholder="jane@company.com"
                 />
               </div>
 
-              {/* Contact & Resume Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
+              <div>
+                <Label required>Phone Number</Label>
+                <InputField
                   type="tel"
-                  id="phone"
                   name="phone"
-                  label="Phone Number"
+                  icon={<Phone className="h-4 w-4" />}
+                  placeholder="+1 (555) 000-0000"
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  icon={<Phone className="w-4 h-4" />}
-                  placeholder="+1 (555) 000-0000"
                 />
+              </div>
 
-                <Input
+              <div>
+                <Label required>Resume / Portfolio URL</Label>
+                <InputField
                   type="url"
-                  id="resumeUrl"
                   name="resumeUrl"
-                  label="Resume Link"
+                  icon={<Link2 className="h-4 w-4" />}
+                  placeholder="https://linkedin.com/in/..."
                   value={formData.resumeUrl}
                   onChange={handleChange}
                   required
-                  icon={<Link2 className="w-4 h-4" />}
-                  placeholder="https://resume.com/yourname"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Cover Letter Section */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <div className="w-6 h-0.5 bg-primary rounded-full" />
-                Cover Letter
-              </h3>
+          {/* Section: Cover Letter */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <FileText className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Cover Letter</h2>
+            </div>
 
-              <Textarea
-                id="coverLetter"
+            <div className="relative">
+              <Label required>Why are you the best fit for this role?</Label>
+              <TextAreaField
                 name="coverLetter"
-                label="Why are you a great fit?"
+                placeholder="Tell us about your experience and why you want to join us..."
                 value={formData.coverLetter}
                 onChange={handleChange}
                 required
-                rows={10}
-                icon={<FileText className="w-4 h-4" />}
-                placeholder="Share your experience, skills, and why you're interested in this role. Tell us what makes you the perfect candidate..."
-                showCount
-                maxCount={MIN_COVER_LETTER_LENGTH}
+                className="min-h-[200px] resize-y"
               />
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col-reverse sm:flex-row gap-4 pt-6 border-t border-border">
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                className="flex-1"
-                onClick={() => router.push(`/jobs/${job.id}`)}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="flex-[2]"
-                isLoading={isPending}
-                disabled={isPending || !isCoverLetterValid}
-              >
-                <Send className="w-5 h-5" />
-                {isPending ? 'Submitting Application...' : 'Submit Application'}
-              </Button>
+              {/* Character Count & Validation Indicator */}
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <div
+                  className={`flex items-center gap-1.5 transition-colors ${isCoverLetterValid ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+                >
+                  {isCoverLetterValid ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Looks good!</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      <span>
+                        Minimum {MIN_COVER_LETTER_LENGTH} characters required
+                      </span>
+                    </>
+                  )}
+                </div>
+                <span
+                  className={
+                    isCoverLetterValid
+                      ? "text-muted-foreground"
+                      : "text-orange-500 font-medium"
+                  }
+                >
+                  {currentLength} / {MIN_COVER_LETTER_LENGTH} characters
+                </span>
+              </div>
             </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Help Text */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            By submitting this application, you agree to share your information with the employer.
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-4 pt-6">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending || !isCoverLetterValid}
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground shadow transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Application
+                  <Send className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            By clicking submit, you agree to our Terms of Service and Privacy
+            Policy.
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );
