@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   generator: "v0.app",
   keywords: ["jobs", "careers", "job board", "ai", "cover letter"],
   authors: [{ name: "JobBoard Team" }],
-  viewport: "width=device-width, initial-scale=1",
+  // REMOVED "viewport" from here to fix the console warning
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -30,6 +30,7 @@ export const metadata: Metadata = {
   },
 };
 
+// Keep viewport settings in this separate export
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -37,7 +38,7 @@ export const viewport: Viewport = {
   userScalable: true,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" }, // Matches slate-950/dark bg
   ],
 };
 
@@ -55,10 +56,34 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <Toaster position="top-right" richColors closeButton />
+        {/* CUSTOMIZED TOASTER */}
+        <Toaster
+          position="top-right"
+          richColors={true} // Enables colorful icons for success/error
+          closeButton
+          theme="system" // Syncs with Flowbite/Next-theme
+          toastOptions={{
+            // This forces the toast to use your Theme Variables
+            style: {
+              background: "hsl(var(--card))",
+              color: "hsl(var(--foreground))",
+              border: "1px solid hsl(var(--border))",
+            },
+            classNames: {
+              toast: "shadow-lg rounded-lg",
+              description: "text-muted-foreground",
+              actionButton: "bg-primary text-primary-foreground",
+              cancelButton: "bg-muted text-muted-foreground",
+            },
+          }}
+        />
+
         <div className="flex flex-col min-h-screen">
           <Header />
-          <main className="flex-grow pt-16">{children}</main>
+          {/* Constrained width container to "zoom out" the content feel */}
+          <main className="flex-grow pt-16 max-w-[1440px] mx-auto w-full px-4 sm:px-6">
+            {children}
+          </main>
           <Footer />
         </div>
       </body>
