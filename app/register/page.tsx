@@ -5,166 +5,216 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signup } from "@/app/actions/auth";
 import { toast } from "sonner";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Briefcase,
+  Building2,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const [isPending, startTransition] = useTransition();
   const [role, setRole] = useState("job-seeker");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
     formData.append("role", role);
 
     startTransition(async () => {
-      const result = await signup(formData);
+      try {
+        const result = await signup(formData);
 
-      if (result?.error) {
-        toast.error(result.error);
-        return;
-      }
+        if (result?.error) {
+          toast.error(result.error);
+          return;
+        }
 
-      if (result?.requiresConfirmation) {
-        // Email confirmation required
-        toast.success(result.success, {
-          duration: 10000,
-        });
-        return;
-      }
-
-      if (result?.success) {
-        // Wait a tiny bit for the auth state to propagate
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Show success toast
-        toast.success("Account created! Redirecting...");
-
-        // Redirect to dashboard
-        router.push("/dashboard");
-        router.refresh();
+        if (result?.requiresConfirmation) {
+          toast.success("Account created! Please check your email.");
+        } else if (result?.success) {
+          toast.success("Account created! Redirecting...");
+          router.push("/dashboard");
+          router.refresh();
+        }
+      } catch (e) {
+        toast.error("An unexpected error occurred");
       }
     });
   }
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col justify-center py-12">
-      <div className="flex flex-col items-center justify-center px-6 mx-auto w-full lg:py-0">
-        {/* Branding/Logo */}
-        <Link
-          href="/"
-          className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
-        >
-          <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
-            <span className="text-xl font-bold text-white">J</span>
-          </div>
-          Job<span className="text-primary-600">Board</span>
-        </Link>
+    <div className="w-full min-h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background text-foreground">
+      {/* Left Side - Visuals (Hidden on mobile - flipped from login for variety) */}
+      <div className="hidden lg:flex relative h-full bg-muted flex-col p-10 text-white dark:border-r border-border">
+        <div className="absolute inset-0 bg-primary/90 dark:bg-zinc-900" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20" />
 
-        <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
+        <div className="relative z-20 flex items-center text-lg font-medium">
+          <div className="mr-2 h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center font-bold">
+            J
+          </div>
+          JobBoard
+        </div>
+
+        <div className="relative z-20 mt-auto">
+          <h2 className="text-3xl font-bold mb-4">Join the community</h2>
+          <ul className="space-y-3 text-primary-foreground/90">
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" /> Access thousands of jobs
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" /> Smart salary insights
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" /> Direct chat with employers
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-y-auto">
+        <div className="mx-auto grid w-full max-w-[480px] gap-6">
+          <div className="flex flex-col text-center space-y-2 lg:text-left">
+            <h1 className="text-3xl font-semibold tracking-tight">
               Create an account
             </h1>
+            <p className="text-sm text-muted-foreground">
+              Choose your role and start your journey
+            </p>
+          </div>
 
-            <form className="space-y-4 md:space-y-6" action={handleSubmit}>
-              {/* Email Input */}
-              <div>
+          <form action={handleSubmit} className="grid gap-6">
+            {/* Visual Role Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                onClick={() => setRole("job-seeker")}
+                className={`cursor-pointer rounded-xl border-2 p-4 hover:border-primary hover:bg-accent transition-all duration-200 ${role === "job-seeker" ? "border-primary bg-primary/5" : "border-transparent bg-muted/50"}`}
+              >
+                <Briefcase
+                  className={`mb-3 h-6 w-6 ${role === "job-seeker" ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <div className="font-semibold text-sm">I'm a Job Seeker</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Looking for my next dream job
+                </div>
+              </div>
+
+              <div
+                onClick={() => setRole("employer")}
+                className={`cursor-pointer rounded-xl border-2 p-4 hover:border-primary hover:bg-accent transition-all duration-200 ${role === "employer" ? "border-primary bg-primary/5" : "border-transparent bg-muted/50"}`}
+              >
+                <Building2
+                  className={`mb-3 h-6 w-6 ${role === "employer" ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <div className="font-semibold text-sm">I'm an Employer</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Hiring talent for my company
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="grid gap-2">
                 <label
+                  className="text-sm font-medium leading-none"
                   htmlFor="email"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  Email Address
+                  Email
                 </label>
                 <input
-                  type="email"
-                  name="email"
                   id="email"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  name="email"
+                  type="email"
                   placeholder="name@company.com"
                   required
+                  className="input"
+                  disabled={isPending}
                 />
               </div>
 
-              {/* Password Input */}
-              <div>
+              <div className="grid gap-2">
                 <label
+                  className="text-sm font-medium leading-none"
                   htmlFor="password"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
                   Password
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  placeholder="••••••••"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  required
-                />
-              </div>
-
-              {/* Role Selection Dropdown */}
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                  I am a:
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  <option value="job-seeker">Job Seeker</option>
-                  <option value="employer">Employer</option>
-                </select>
-              </div>
-
-              {/* Terms & Conditions */}
-              <div className="flex items-start">
-                <div className="flex items-center h-5">
+                <div className="relative">
                   <input
-                    id="terms"
-                    type="checkbox"
-                    className="w-4 h-4 rounded border border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700"
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a strong password"
                     required
+                    className="input pr-10"
+                    disabled={isPending}
                   />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label
-                    htmlFor="terms"
-                    className="font-light text-gray-500 dark:text-gray-300"
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    I accept the{" "}
-                    <a
-                      className="font-medium text-primary-600 hover:underline dark:text-primary-500"
-                      href="#"
-                    >
-                      Terms and Conditions
-                    </a>
-                  </label>
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isPending}
-                className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            <div className="flex items-start gap-3">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                required
+                className="h-4 w-4 mt-1 rounded border-input text-primary focus:ring-ring"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm text-muted-foreground leading-snug"
               >
-                {isPending ? "Creating account..." : "Create an account"}
-              </button>
-
-              {/* Login Link */}
-              <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                I agree to the{" "}
+                <a
+                  href="#"
+                  className="underline underline-offset-4 hover:text-primary"
                 >
-                  Login here
-                </Link>
-              </p>
-            </form>
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-full"
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Account
+            </button>
+          </form>
+
+          <div className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:underline"
+            >
+              Sign in
+            </Link>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
