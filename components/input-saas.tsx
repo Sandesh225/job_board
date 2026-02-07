@@ -1,16 +1,14 @@
-'use client'
+"use client";
 
-import React from "react"
+import React from "react";
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
 
-import { forwardRef } from 'react'
-import { cn } from '@/lib/utils'
-
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string
-  error?: string
-  icon?: React.ReactNode
-  helper?: string
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  icon?: React.ReactNode;
+  helper?: string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -21,29 +19,30 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       error,
       icon,
       helper,
-      type = 'text',
+      type = "text",
       disabled,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const hasError = error && error.length > 0
+    const hasError = error && error.length > 0;
 
     return (
       <div className="w-full space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-foreground">
+          <label className="block text-sm font-semibold text-foreground">
             {label}
             {props.required && <span className="ml-1 text-destructive">*</span>}
           </label>
         )}
         <div
           className={cn(
-            'flex items-center gap-2 rounded-md border border-input bg-input px-3 py-2 text-base outline-none transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20',
+            "flex items-center gap-2 rounded-lg border bg-input px-3 py-3 text-base outline-none transition-all duration-200",
+            "border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
             hasError &&
-              'border-destructive focus-within:ring-destructive/20 focus-within:border-destructive',
-            disabled && 'opacity-50 cursor-not-allowed',
-            className
+              "border-destructive focus-within:ring-destructive/20 focus-within:border-destructive",
+            disabled && "opacity-50 cursor-not-allowed",
+            className,
           )}
         >
           {icon && (
@@ -55,15 +54,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             disabled={disabled}
             ref={ref}
-            className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            className={cn(
+              "w-full bg-transparent outline-none border-none focus:ring-0 text-foreground placeholder:text-muted-foreground",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
             {...props}
           />
         </div>
         {helper && !hasError && (
-          <p className="text-xs text-muted-foreground">{helper}</p>
+          <p className="text-xs text-muted-foreground mt-1">{helper}</p>
         )}
         {hasError && (
-          <p className="text-xs text-destructive flex items-center gap-1">
+          <p className="text-xs text-destructive flex items-center gap-1 mt-1">
             <svg
               className="h-3.5 w-3.5"
               fill="currentColor"
@@ -79,10 +81,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-Input.displayName = 'Input'
+Input.displayName = "Input";
 
-export { Input }
+export { Input };
